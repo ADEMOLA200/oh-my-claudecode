@@ -3300,14 +3300,23 @@ var init_ssrf_guard = __esm({
 });
 
 // src/config/models.ts
+function resolveTierModelFromEnv(tier) {
+  for (const key of TIER_ENV_KEYS[tier]) {
+    const value = process.env[key]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+  return void 0;
+}
 function getDefaultModelHigh() {
-  return process.env.OMC_MODEL_HIGH || BUILTIN_TIER_MODEL_DEFAULTS.HIGH;
+  return resolveTierModelFromEnv("HIGH") || BUILTIN_TIER_MODEL_DEFAULTS.HIGH;
 }
 function getDefaultModelMedium() {
-  return process.env.OMC_MODEL_MEDIUM || BUILTIN_TIER_MODEL_DEFAULTS.MEDIUM;
+  return resolveTierModelFromEnv("MEDIUM") || BUILTIN_TIER_MODEL_DEFAULTS.MEDIUM;
 }
 function getDefaultModelLow() {
-  return process.env.OMC_MODEL_LOW || BUILTIN_TIER_MODEL_DEFAULTS.LOW;
+  return resolveTierModelFromEnv("LOW") || BUILTIN_TIER_MODEL_DEFAULTS.LOW;
 }
 function getDefaultTierModels() {
   return {
@@ -3363,11 +3372,28 @@ function isNonClaudeProvider() {
   }
   return false;
 }
-var CLAUDE_FAMILY_DEFAULTS, BUILTIN_TIER_MODEL_DEFAULTS, CLAUDE_FAMILY_HIGH_VARIANTS, BUILTIN_EXTERNAL_MODEL_DEFAULTS;
+var TIER_ENV_KEYS, CLAUDE_FAMILY_DEFAULTS, BUILTIN_TIER_MODEL_DEFAULTS, CLAUDE_FAMILY_HIGH_VARIANTS, BUILTIN_EXTERNAL_MODEL_DEFAULTS;
 var init_models = __esm({
   "src/config/models.ts"() {
     "use strict";
     init_ssrf_guard();
+    TIER_ENV_KEYS = {
+      LOW: [
+        "OMC_MODEL_LOW",
+        "CLAUDE_CODE_BEDROCK_HAIKU_MODEL",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL"
+      ],
+      MEDIUM: [
+        "OMC_MODEL_MEDIUM",
+        "CLAUDE_CODE_BEDROCK_SONNET_MODEL",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL"
+      ],
+      HIGH: [
+        "OMC_MODEL_HIGH",
+        "CLAUDE_CODE_BEDROCK_OPUS_MODEL",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL"
+      ]
+    };
     CLAUDE_FAMILY_DEFAULTS = {
       HAIKU: "claude-haiku-4-5",
       SONNET: "claude-sonnet-4-6",
@@ -3391,6 +3417,124 @@ var init_models = __esm({
 });
 
 // src/config/loader.ts
+function buildDefaultConfig() {
+  const defaultTierModels = getDefaultTierModels();
+  return {
+    agents: {
+      omc: { model: defaultTierModels.HIGH },
+      explore: { model: defaultTierModels.LOW },
+      analyst: { model: defaultTierModels.HIGH },
+      planner: { model: defaultTierModels.HIGH },
+      architect: { model: defaultTierModels.HIGH },
+      debugger: { model: defaultTierModels.MEDIUM },
+      executor: { model: defaultTierModels.MEDIUM },
+      verifier: { model: defaultTierModels.MEDIUM },
+      securityReviewer: { model: defaultTierModels.MEDIUM },
+      codeReviewer: { model: defaultTierModels.HIGH },
+      testEngineer: { model: defaultTierModels.MEDIUM },
+      designer: { model: defaultTierModels.MEDIUM },
+      writer: { model: defaultTierModels.LOW },
+      qaTester: { model: defaultTierModels.MEDIUM },
+      scientist: { model: defaultTierModels.MEDIUM },
+      gitMaster: { model: defaultTierModels.MEDIUM },
+      codeSimplifier: { model: defaultTierModels.HIGH },
+      critic: { model: defaultTierModels.HIGH },
+      documentSpecialist: { model: defaultTierModels.MEDIUM }
+    },
+    features: {
+      parallelExecution: true,
+      lspTools: true,
+      // Real LSP integration with language servers
+      astTools: true,
+      // Real AST tools using ast-grep
+      continuationEnforcement: true,
+      autoContextInjection: true
+    },
+    mcpServers: {
+      exa: { enabled: true },
+      context7: { enabled: true }
+    },
+    permissions: {
+      allowBash: true,
+      allowEdit: true,
+      allowWrite: true,
+      maxBackgroundTasks: 5
+    },
+    magicKeywords: {
+      ultrawork: ["ultrawork", "ulw", "uw"],
+      search: ["search", "find", "locate"],
+      analyze: ["analyze", "investigate", "examine"],
+      ultrathink: ["ultrathink", "think", "reason", "ponder"]
+    },
+    // Intelligent model routing configuration
+    routing: {
+      enabled: true,
+      defaultTier: "MEDIUM",
+      forceInherit: false,
+      escalationEnabled: true,
+      maxEscalations: 2,
+      tierModels: { ...defaultTierModels },
+      agentOverrides: {
+        architect: { tier: "HIGH", reason: "Advisory agent requires deep reasoning" },
+        planner: { tier: "HIGH", reason: "Strategic planning requires deep reasoning" },
+        critic: { tier: "HIGH", reason: "Critical review requires deep reasoning" },
+        analyst: { tier: "HIGH", reason: "Pre-planning analysis requires deep reasoning" },
+        explore: { tier: "LOW", reason: "Exploration is search-focused" },
+        "writer": { tier: "LOW", reason: "Documentation is straightforward" }
+      },
+      escalationKeywords: [
+        "critical",
+        "production",
+        "urgent",
+        "security",
+        "breaking",
+        "architecture",
+        "refactor",
+        "redesign",
+        "root cause"
+      ],
+      simplificationKeywords: [
+        "find",
+        "list",
+        "show",
+        "where",
+        "search",
+        "locate",
+        "grep"
+      ]
+    },
+    // External models configuration (Codex, Gemini)
+    // Static defaults only — env var overrides applied in loadEnvConfig()
+    externalModels: {
+      defaults: {
+        codexModel: BUILTIN_EXTERNAL_MODEL_DEFAULTS.codexModel,
+        geminiModel: BUILTIN_EXTERNAL_MODEL_DEFAULTS.geminiModel
+      },
+      fallbackPolicy: {
+        onModelFailure: "provider_chain",
+        allowCrossProvider: false,
+        crossProviderOrder: ["codex", "gemini"]
+      }
+    },
+    // Delegation routing configuration (opt-in feature for external model routing)
+    delegationRouting: {
+      enabled: false,
+      defaultProvider: "claude",
+      roles: {}
+    },
+    startupCodebaseMap: {
+      enabled: true,
+      maxFiles: 200,
+      maxDepth: 4
+    },
+    taskSizeDetection: {
+      enabled: true,
+      smallWordLimit: 50,
+      largeWordLimit: 200,
+      suppressHeavyModesForSmallTasks: true
+    }
+  };
+}
 function getConfigPaths() {
   const userConfigDir = getConfigDir2();
   return {
@@ -3413,16 +3557,17 @@ function loadJsoncFile(path20) {
 }
 function deepMerge(target, source) {
   const result = { ...target };
+  const mutableResult = result;
   for (const key of Object.keys(source)) {
     const sourceValue = source[key];
-    const targetValue = result[key];
+    const targetValue = mutableResult[key];
     if (sourceValue !== void 0 && typeof sourceValue === "object" && sourceValue !== null && !Array.isArray(sourceValue) && typeof targetValue === "object" && targetValue !== null && !Array.isArray(targetValue)) {
-      result[key] = deepMerge(
+      mutableResult[key] = deepMerge(
         targetValue,
         sourceValue
       );
     } else if (sourceValue !== void 0) {
-      result[key] = sourceValue;
+      mutableResult[key] = sourceValue;
     }
   }
   return result;
@@ -3549,7 +3694,7 @@ function loadEnvConfig() {
 }
 function loadConfig() {
   const paths = getConfigPaths();
-  let config2 = { ...DEFAULT_CONFIG };
+  let config2 = buildDefaultConfig();
   const userConfig = loadJsoncFile(paths.user);
   if (userConfig) {
     config2 = deepMerge(config2, userConfig);
@@ -3863,7 +4008,7 @@ function generateConfigSchema() {
     }
   };
 }
-var import_fs2, import_path2, DEFAULT_TIER_MODELS, DEFAULT_CONFIG;
+var import_fs2, import_path2, DEFAULT_CONFIG;
 var init_loader = __esm({
   "src/config/loader.ts"() {
     "use strict";
@@ -3872,125 +4017,7 @@ var init_loader = __esm({
     init_paths();
     init_jsonc();
     init_models();
-    DEFAULT_TIER_MODELS = getDefaultTierModels();
-    DEFAULT_CONFIG = {
-      agents: {
-        omc: { model: DEFAULT_TIER_MODELS.HIGH },
-        explore: { model: DEFAULT_TIER_MODELS.LOW },
-        analyst: { model: DEFAULT_TIER_MODELS.HIGH },
-        planner: { model: DEFAULT_TIER_MODELS.HIGH },
-        architect: { model: DEFAULT_TIER_MODELS.HIGH },
-        debugger: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        executor: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        verifier: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        securityReviewer: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        codeReviewer: { model: DEFAULT_TIER_MODELS.HIGH },
-        testEngineer: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        designer: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        writer: { model: DEFAULT_TIER_MODELS.LOW },
-        qaTester: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        scientist: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        gitMaster: { model: DEFAULT_TIER_MODELS.MEDIUM },
-        codeSimplifier: { model: DEFAULT_TIER_MODELS.HIGH },
-        critic: { model: DEFAULT_TIER_MODELS.HIGH },
-        documentSpecialist: { model: DEFAULT_TIER_MODELS.MEDIUM }
-      },
-      features: {
-        parallelExecution: true,
-        lspTools: true,
-        // Real LSP integration with language servers
-        astTools: true,
-        // Real AST tools using ast-grep
-        continuationEnforcement: true,
-        autoContextInjection: true
-      },
-      mcpServers: {
-        exa: { enabled: true },
-        context7: { enabled: true }
-      },
-      permissions: {
-        allowBash: true,
-        allowEdit: true,
-        allowWrite: true,
-        maxBackgroundTasks: 5
-      },
-      magicKeywords: {
-        ultrawork: ["ultrawork", "ulw", "uw"],
-        search: ["search", "find", "locate"],
-        analyze: ["analyze", "investigate", "examine"],
-        ultrathink: ["ultrathink", "think", "reason", "ponder"]
-      },
-      // Intelligent model routing configuration
-      routing: {
-        enabled: true,
-        defaultTier: "MEDIUM",
-        forceInherit: false,
-        escalationEnabled: true,
-        maxEscalations: 2,
-        tierModels: { ...DEFAULT_TIER_MODELS },
-        agentOverrides: {
-          architect: { tier: "HIGH", reason: "Advisory agent requires deep reasoning" },
-          planner: { tier: "HIGH", reason: "Strategic planning requires deep reasoning" },
-          critic: { tier: "HIGH", reason: "Critical review requires deep reasoning" },
-          analyst: { tier: "HIGH", reason: "Pre-planning analysis requires deep reasoning" },
-          explore: { tier: "LOW", reason: "Exploration is search-focused" },
-          "writer": { tier: "LOW", reason: "Documentation is straightforward" }
-        },
-        escalationKeywords: [
-          "critical",
-          "production",
-          "urgent",
-          "security",
-          "breaking",
-          "architecture",
-          "refactor",
-          "redesign",
-          "root cause"
-        ],
-        simplificationKeywords: [
-          "find",
-          "list",
-          "show",
-          "where",
-          "search",
-          "locate",
-          "grep"
-        ]
-      },
-      // External models configuration (Codex, Gemini)
-      // Static defaults only — env var overrides applied in loadEnvConfig()
-      externalModels: {
-        defaults: {
-          codexModel: BUILTIN_EXTERNAL_MODEL_DEFAULTS.codexModel,
-          geminiModel: BUILTIN_EXTERNAL_MODEL_DEFAULTS.geminiModel
-        },
-        fallbackPolicy: {
-          onModelFailure: "provider_chain",
-          allowCrossProvider: false,
-          crossProviderOrder: ["codex", "gemini"]
-        }
-      },
-      // Delegation routing configuration (opt-in feature for external model routing)
-      delegationRouting: {
-        enabled: false,
-        // Opt-in feature
-        defaultProvider: "claude",
-        roles: {}
-      },
-      // Startup codebase map injection (issue #804)
-      startupCodebaseMap: {
-        enabled: true,
-        maxFiles: 200,
-        maxDepth: 4
-      },
-      // Task size detection (issue #790): prevent over-orchestration for small tasks
-      taskSizeDetection: {
-        enabled: true,
-        smallWordLimit: 50,
-        largeWordLimit: 200,
-        suppressHeavyModesForSmallTasks: true
-      }
-    };
+    DEFAULT_CONFIG = buildDefaultConfig();
   }
 });
 
@@ -5638,7 +5665,8 @@ var init_mode_names = __esm({
       { file: MODE_STATE_FILE_MAP[MODE_NAMES.TEAM], mode: MODE_NAMES.TEAM },
       { file: MODE_STATE_FILE_MAP[MODE_NAMES.RALPH], mode: MODE_NAMES.RALPH },
       { file: MODE_STATE_FILE_MAP[MODE_NAMES.ULTRAWORK], mode: MODE_NAMES.ULTRAWORK },
-      { file: MODE_STATE_FILE_MAP[MODE_NAMES.ULTRAQA], mode: MODE_NAMES.ULTRAQA }
+      { file: MODE_STATE_FILE_MAP[MODE_NAMES.ULTRAQA], mode: MODE_NAMES.ULTRAQA },
+      { file: "skill-active-state.json", mode: "skill-active" }
     ];
     SESSION_METRICS_MODE_FILES = [
       { file: MODE_STATE_FILE_MAP[MODE_NAMES.AUTOPILOT], mode: MODE_NAMES.AUTOPILOT },
@@ -10295,7 +10323,9 @@ var init_skill_state = __esm({
       "configure-notifications": "light",
       // === Medium protection (review/planning, 5 reinforcements) ===
       plan: "medium",
-      ralplan: "medium",
+      ralplan: "none",
+      // Has first-class checkRalplan() enforcement; no skill-active needed
+      "deep-interview": "heavy",
       review: "medium",
       "external-context": "medium",
       sciomc: "medium",
@@ -14128,7 +14158,7 @@ async function checkTeamPipeline(sessionId, directory, cancelInProgress) {
   }
   const rawPhase = teamState.phase ?? teamState.current_phase ?? teamState.currentStage ?? teamState.current_stage ?? teamState.stage;
   if (typeof rawPhase !== "string") {
-    return null;
+    return { shouldBlock: false, message: "", mode: "team" };
   }
   const phase = rawPhase.trim().toLowerCase();
   if (phase === "complete" || phase === "completed" || phase === "failed" || phase === "cancelled" || phase === "canceled" || phase === "cancel") {
@@ -14141,7 +14171,7 @@ async function checkTeamPipeline(sessionId, directory, cancelInProgress) {
   }
   const KNOWN_ACTIVE_PHASES = /* @__PURE__ */ new Set(["team-plan", "team-prd", "team-exec", "team-verify", "team-fix"]);
   if (!KNOWN_ACTIVE_PHASES.has(phase)) {
-    return null;
+    return { shouldBlock: false, message: "", mode: "team" };
   }
   const rawStatus = teamState.status;
   const status = typeof rawStatus === "string" ? rawStatus.trim().toLowerCase() : null;
@@ -14203,11 +14233,19 @@ async function checkRalplan(sessionId, directory, cancelInProgress) {
   if (sessionId && state.session_id && state.session_id !== sessionId) {
     return null;
   }
+  const currentPhase = state.current_phase;
+  if (typeof currentPhase === "string") {
+    const terminal = ["complete", "completed", "failed", "cancelled", "done"];
+    if (terminal.includes(currentPhase.toLowerCase())) {
+      writeStopBreaker(workingDir, "ralplan", 0, sessionId);
+      return { shouldBlock: false, message: "", mode: "ralplan" };
+    }
+  }
   if (cancelInProgress) {
     return {
       shouldBlock: false,
       message: "",
-      mode: "none"
+      mode: "ralplan"
     };
   }
   const breakerCount = readStopBreaker(workingDir, "ralplan", sessionId, RALPLAN_STOP_BLOCKER_TTL_MS) + 1;
@@ -14216,7 +14254,7 @@ async function checkRalplan(sessionId, directory, cancelInProgress) {
     return {
       shouldBlock: false,
       message: `[RALPLAN CIRCUIT BREAKER] Stop enforcement exceeded ${RALPLAN_STOP_BLOCKER_MAX} reinforcements. Allowing stop to prevent infinite blocking.`,
-      mode: "none"
+      mode: "ralplan"
     };
   }
   writeStopBreaker(workingDir, "ralplan", breakerCount, sessionId);
@@ -20666,6 +20704,13 @@ function isCacheValid(cache) {
   const ttl = cache.error ? CACHE_TTL_FAILURE_MS : CACHE_TTL_SUCCESS_MS;
   return Date.now() - cache.timestamp < ttl;
 }
+function getCachedUsageResult(cache) {
+  if (cache.rateLimited) {
+    return { rateLimits: cache.data, error: "rate_limited" };
+  }
+  const cachedError = cache.error && !cache.data ? cache.errorReason || "network" : void 0;
+  return { rateLimits: cache.data, error: cachedError };
+}
 function getKeychainServiceName() {
   const configDir = process.env.CLAUDE_CONFIG_DIR;
   if (configDir) {
@@ -21000,69 +21045,51 @@ async function getUsage() {
   const authToken = process.env.ANTHROPIC_AUTH_TOKEN;
   const isZai = baseUrl != null && isZaiHost(baseUrl);
   const currentSource = isZai && authToken ? "zai" : "anthropic";
-  const cache = readCache();
-  if (cache && isCacheValid(cache) && cache.source === currentSource) {
-    if (cache.rateLimited) {
-      return { rateLimits: cache.data, error: "rate_limited" };
-    }
-    const cachedError = cache.error && !cache.data ? cache.errorReason || "network" : void 0;
-    return { rateLimits: cache.data, error: cachedError };
+  const initialCache = readCache();
+  if (initialCache && isCacheValid(initialCache) && initialCache.source === currentSource) {
+    return getCachedUsageResult(initialCache);
   }
-  try {
-    return await withFileLock(
-      lockPathFor(getCachePath()),
-      () => fetchUsageWithLock(isZai, authToken),
-      { staleLockMs: LOCK_STALE_MS2 }
-    );
-  } catch (err) {
-    if (err instanceof Error && err.message.startsWith("Failed to acquire file lock")) {
-      if (cache?.data) {
-        return { rateLimits: cache.data };
+  return withFileLock(lockPathFor(getCachePath()), async () => {
+    const cache = readCache();
+    if (cache && isCacheValid(cache) && cache.source === currentSource) {
+      return getCachedUsageResult(cache);
+    }
+    if (isZai && authToken) {
+      const result = await fetchUsageFromZai();
+      if (result.rateLimited) {
+        const prevCount = cache?.rateLimitedCount || 0;
+        const newCount = prevCount + 1;
+        writeCache(cache?.data || null, !cache?.data, "zai", true, newCount, "rate_limited");
+        if (cache?.data) {
+          return { rateLimits: cache.data, error: "rate_limited" };
+        }
+        return { rateLimits: null, error: "rate_limited" };
       }
-      return { rateLimits: null, error: "network" };
-    }
-    return { rateLimits: null, error: "network" };
-  }
-}
-async function fetchUsageWithLock(isZai, authToken) {
-  const cache = readCache();
-  if (isZai && authToken) {
-    const result = await fetchUsageFromZai();
-    if (result.rateLimited) {
-      const prevCount = cache?.rateLimitedCount || 0;
-      const newCount = prevCount + 1;
-      writeCache(cache?.data || null, !cache?.data, "zai", true, newCount, "rate_limited");
-      if (cache?.data) {
-        return { rateLimits: cache.data, error: "rate_limited" };
+      if (!result.data) {
+        writeCache(null, true, "zai", false, 0, "network");
+        return { rateLimits: null, error: "network" };
       }
-      return { rateLimits: null, error: "rate_limited" };
+      const usage = parseZaiResponse(result.data);
+      writeCache(usage, !usage, "zai");
+      return { rateLimits: usage };
     }
-    if (!result.data) {
-      writeCache(null, true, "zai", false, 0, "network");
-      return { rateLimits: null, error: "network" };
-    }
-    const usage = parseZaiResponse(result.data);
-    writeCache(usage, !usage, "zai");
-    return { rateLimits: usage };
-  }
-  let creds = getCredentials();
-  if (creds) {
-    if (!validateCredentials(creds)) {
-      if (creds.refreshToken) {
-        const refreshed = await refreshAccessToken(creds.refreshToken);
-        if (refreshed) {
-          creds = { ...creds, ...refreshed };
-          writeBackCredentials(creds);
+    let creds = getCredentials();
+    if (creds) {
+      if (!validateCredentials(creds)) {
+        if (creds.refreshToken) {
+          const refreshed = await refreshAccessToken(creds.refreshToken);
+          if (refreshed) {
+            creds = { ...creds, ...refreshed };
+            writeBackCredentials(creds);
+          } else {
+            writeCache(null, true, "anthropic", false, 0, "auth");
+            return { rateLimits: null, error: "auth" };
+          }
         } else {
           writeCache(null, true, "anthropic", false, 0, "auth");
           return { rateLimits: null, error: "auth" };
         }
-      } else {
-        writeCache(null, true, "anthropic", false, 0, "auth");
-        return { rateLimits: null, error: "auth" };
       }
-    }
-    if (creds) {
       const result = await fetchUsageFromApi(creds.accessToken);
       if (result.rateLimited) {
         const prevCount = cache?.rateLimitedCount || 0;
@@ -21081,11 +21108,11 @@ async function fetchUsageWithLock(isZai, authToken) {
       writeCache(usage, !usage, "anthropic");
       return { rateLimits: usage };
     }
-  }
-  writeCache(null, true, "anthropic", false, 0, "no_credentials");
-  return { rateLimits: null, error: "no_credentials" };
+    writeCache(null, true, "anthropic", false, 0, "no_credentials");
+    return { rateLimits: null, error: "no_credentials" };
+  }, USAGE_CACHE_LOCK_OPTS);
 }
-var import_fs72, import_path82, import_child_process22, import_crypto12, import_https3, CACHE_TTL_SUCCESS_MS, CACHE_TTL_FAILURE_MS, CACHE_TTL_RATE_LIMITED_MS, MAX_RATE_LIMITED_BACKOFF_MS, API_TIMEOUT_MS2, LOCK_STALE_MS2, TOKEN_REFRESH_URL_HOSTNAME, TOKEN_REFRESH_URL_PATH, DEFAULT_OAUTH_CLIENT_ID;
+var import_fs72, import_path82, import_child_process22, import_crypto12, import_https3, CACHE_TTL_SUCCESS_MS, CACHE_TTL_FAILURE_MS, CACHE_TTL_RATE_LIMITED_MS, MAX_RATE_LIMITED_BACKOFF_MS, API_TIMEOUT_MS2, TOKEN_REFRESH_URL_HOSTNAME, USAGE_CACHE_LOCK_OPTS, TOKEN_REFRESH_URL_PATH, DEFAULT_OAUTH_CLIENT_ID;
 var init_usage_api = __esm({
   "src/hud/usage-api.ts"() {
     "use strict";
@@ -21097,13 +21124,13 @@ var init_usage_api = __esm({
     import_https3 = __toESM(require("https"), 1);
     init_ssrf_guard();
     init_file_lock();
-    CACHE_TTL_SUCCESS_MS = 30 * 1e3;
+    CACHE_TTL_SUCCESS_MS = 90 * 1e3;
     CACHE_TTL_FAILURE_MS = 15 * 1e3;
     CACHE_TTL_RATE_LIMITED_MS = 120 * 1e3;
     MAX_RATE_LIMITED_BACKOFF_MS = 600 * 1e3;
     API_TIMEOUT_MS2 = 1e4;
-    LOCK_STALE_MS2 = API_TIMEOUT_MS2 + 5e3;
     TOKEN_REFRESH_URL_HOSTNAME = "platform.claude.com";
+    USAGE_CACHE_LOCK_OPTS = { timeoutMs: API_TIMEOUT_MS2 + 2e3 };
     TOKEN_REFRESH_URL_PATH = "/v1/oauth/token";
     DEFAULT_OAUTH_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
   }
@@ -21292,7 +21319,7 @@ async function withDispatchLock(teamName, cwd2, fn) {
       if (err.code !== "EEXIST") throw error2;
       try {
         const info = await (0, import_promises8.stat)(lockDir);
-        if (Date.now() - info.mtimeMs > LOCK_STALE_MS3) {
+        if (Date.now() - info.mtimeMs > LOCK_STALE_MS2) {
           await (0, import_promises8.rm)(lockDir, { recursive: true, force: true });
           continue;
         }
@@ -21465,7 +21492,7 @@ async function markDispatchRequestDelivered(teamName, requestId, patch = {}, cwd
   if (current.status === "delivered") return current;
   return await transitionDispatchRequest(teamName, requestId, current.status, "delivered", patch, cwd2);
 }
-var import_crypto14, import_fs77, import_promises8, import_path88, OMC_DISPATCH_LOCK_TIMEOUT_ENV, DEFAULT_DISPATCH_LOCK_TIMEOUT_MS, MIN_DISPATCH_LOCK_TIMEOUT_MS, MAX_DISPATCH_LOCK_TIMEOUT_MS, DISPATCH_LOCK_INITIAL_POLL_MS, DISPATCH_LOCK_MAX_POLL_MS, LOCK_STALE_MS3;
+var import_crypto14, import_fs77, import_promises8, import_path88, OMC_DISPATCH_LOCK_TIMEOUT_ENV, DEFAULT_DISPATCH_LOCK_TIMEOUT_MS, MIN_DISPATCH_LOCK_TIMEOUT_MS, MAX_DISPATCH_LOCK_TIMEOUT_MS, DISPATCH_LOCK_INITIAL_POLL_MS, DISPATCH_LOCK_MAX_POLL_MS, LOCK_STALE_MS2;
 var init_dispatch_queue = __esm({
   "src/team/dispatch-queue.ts"() {
     "use strict";
@@ -21482,7 +21509,7 @@ var init_dispatch_queue = __esm({
     MAX_DISPATCH_LOCK_TIMEOUT_MS = 12e4;
     DISPATCH_LOCK_INITIAL_POLL_MS = 25;
     DISPATCH_LOCK_MAX_POLL_MS = 500;
-    LOCK_STALE_MS3 = 5 * 60 * 1e3;
+    LOCK_STALE_MS2 = 5 * 60 * 1e3;
   }
 });
 
@@ -22596,6 +22623,15 @@ var init_model_contract = __esm({
       "ANTHROPIC_BASE_URL",
       "CLAUDE_CODE_USE_BEDROCK",
       "CLAUDE_CODE_USE_VERTEX",
+      "CLAUDE_CODE_BEDROCK_OPUS_MODEL",
+      "CLAUDE_CODE_BEDROCK_SONNET_MODEL",
+      "CLAUDE_CODE_BEDROCK_HAIKU_MODEL",
+      "ANTHROPIC_DEFAULT_OPUS_MODEL",
+      "ANTHROPIC_DEFAULT_SONNET_MODEL",
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+      "OMC_MODEL_HIGH",
+      "OMC_MODEL_MEDIUM",
+      "OMC_MODEL_LOW",
       "OMC_EXTERNAL_MODELS_DEFAULT_CODEX_MODEL",
       "OMC_CODEX_DEFAULT_MODEL",
       "OMC_EXTERNAL_MODELS_DEFAULT_GEMINI_MODEL",
@@ -26051,7 +26087,9 @@ function renderRateLimitsWithBar(limits, barWidth = 8) {
 function renderRateLimitsError(result) {
   if (!result?.error) return null;
   if (result.error === "no_credentials") return null;
-  if (result.error === "rate_limited") return `${DIM4}[API 429]${RESET}`;
+  if (result.error === "rate_limited") {
+    return result.rateLimits ? null : `${DIM4}[API 429]${RESET}`;
+  }
   if (result.error === "auth") return `${YELLOW6}[API auth]${RESET}`;
   return `${YELLOW6}[API err]${RESET}`;
 }
@@ -27460,6 +27498,7 @@ init_loader();
 
 // src/agents/definitions.ts
 init_utils();
+init_loader();
 
 // src/agents/architect.ts
 init_utils();
@@ -27898,6 +27937,30 @@ var codeSimplifierAgent = {
   model: "opus",
   defaultModel: "opus"
 };
+var AGENT_CONFIG_KEY_MAP = {
+  explore: "explore",
+  analyst: "analyst",
+  planner: "planner",
+  architect: "architect",
+  debugger: "debugger",
+  executor: "executor",
+  verifier: "verifier",
+  "security-reviewer": "securityReviewer",
+  "code-reviewer": "codeReviewer",
+  "test-engineer": "testEngineer",
+  designer: "designer",
+  writer: "writer",
+  "qa-tester": "qaTester",
+  scientist: "scientist",
+  "git-master": "gitMaster",
+  "code-simplifier": "codeSimplifier",
+  critic: "critic",
+  "document-specialist": "documentSpecialist"
+};
+function getConfiguredAgentModel(name, config2) {
+  const key = AGENT_CONFIG_KEY_MAP[name];
+  return key ? config2.agents?.[key]?.model : void 0;
+}
 function getAgentDefinitions(options) {
   const agents = {
     // ============================================================
@@ -27934,17 +27997,21 @@ function getAgentDefinitions(options) {
     // ============================================================
     "document-specialist": documentSpecialistAgent
   };
+  const resolvedConfig = options?.config ?? loadConfig();
   const result = {};
-  for (const [name, config2] of Object.entries(agents)) {
+  for (const [name, agentConfig] of Object.entries(agents)) {
     const override = options?.overrides?.[name];
-    const disallowedTools = config2.disallowedTools ?? parseDisallowedTools(name);
+    const configuredModel = getConfiguredAgentModel(name, resolvedConfig);
+    const disallowedTools = agentConfig.disallowedTools ?? parseDisallowedTools(name);
+    const resolvedModel = override?.model ?? configuredModel ?? agentConfig.model;
+    const resolvedDefaultModel = override?.defaultModel ?? agentConfig.defaultModel;
     result[name] = {
-      description: override?.description ?? config2.description,
-      prompt: override?.prompt ?? config2.prompt,
-      tools: override?.tools ?? config2.tools,
+      description: override?.description ?? agentConfig.description,
+      prompt: override?.prompt ?? agentConfig.prompt,
+      tools: override?.tools ?? agentConfig.tools,
       disallowedTools,
-      model: override?.model ?? config2.model,
-      defaultModel: override?.defaultModel ?? config2.defaultModel
+      model: resolvedModel,
+      defaultModel: resolvedDefaultModel
     };
   }
   return result;
@@ -52007,6 +52074,20 @@ Install with: ${this.serverConfig.installHint}`
     });
   }
   /**
+   * Synchronously kill the LSP server process.
+   * Used in process exit handlers where async operations are not possible.
+   */
+  forceKill() {
+    if (this.process) {
+      try {
+        this.process.kill("SIGKILL");
+      } catch {
+      }
+      this.process = null;
+      this.initialized = false;
+    }
+  }
+  /**
    * Disconnect from the LSP server
    */
   async disconnect() {
@@ -52388,6 +52469,32 @@ var LspClientManager = class {
   idleTimer = null;
   constructor() {
     this.startIdleCheck();
+    this.registerCleanupHandlers();
+  }
+  /**
+   * Register process exit/signal handlers to kill all spawned LSP server processes.
+   * Prevents orphaned language server processes (e.g. kotlin-language-server)
+   * when the MCP bridge process exits or a claude session ends.
+   */
+  registerCleanupHandlers() {
+    const forceKillAll = () => {
+      for (const client of this.clients.values()) {
+        try {
+          client.forceKill();
+        } catch {
+        }
+      }
+      this.clients.clear();
+      this.lastUsed.clear();
+      this.inFlightCount.clear();
+    };
+    process.on("exit", forceKillAll);
+    for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"]) {
+      process.on(sig, () => {
+        forceKillAll();
+        process.exit(0);
+      });
+    }
   }
   /**
    * Get or create a client for a file
@@ -60872,6 +60979,8 @@ async function processPostToolUse(input) {
       const hook = createRalphLoopHook2(directory);
       hook.startLoop(input.sessionId, cleanPrompt);
     }
+    const { clearSkillActiveState: clearSkillActiveState2 } = await Promise.resolve().then(() => (init_skill_state(), skill_state_exports));
+    clearSkillActiveState2(directory, input.sessionId);
   }
   const orchestratorResult = processOrchestratorPostTool(
     {
@@ -61708,7 +61817,7 @@ ${options.customSystemPrompt}`;
   if (contextAddition) {
     systemPrompt += contextAddition;
   }
-  const agents = getAgentDefinitions();
+  const agents = getAgentDefinitions({ config: config2 });
   const externalMcpServers = getDefaultMcpServers({
     exaApiKey: config2.mcpServers?.exa?.apiKey,
     enableExa: config2.mcpServers?.exa?.enabled,
@@ -61792,6 +61901,7 @@ async function checkRateLimitStatus() {
     const weeklyLimited = (usage.weeklyPercent ?? 0) >= RATE_LIMIT_THRESHOLD;
     const monthlyLimited = (usage.monthlyPercent ?? 0) >= RATE_LIMIT_THRESHOLD;
     const isLimited = fiveHourLimited || weeklyLimited || monthlyLimited;
+    const usingStaleData = result.error === "rate_limited" && !!result.rateLimits;
     let nextResetAt = null;
     let timeUntilResetMs = null;
     if (isLimited) {
@@ -61823,6 +61933,11 @@ async function checkRateLimitStatus() {
       monthlyResetsAt: usage.monthlyResetsAt ?? null,
       nextResetAt,
       timeUntilResetMs,
+      fiveHourPercent: usage.fiveHourPercent,
+      weeklyPercent: usage.weeklyPercent,
+      monthlyPercent: usage.monthlyPercent,
+      apiErrorReason: result.error,
+      usingStaleData,
       lastCheckedAt: /* @__PURE__ */ new Date()
     };
   } catch (error2) {
@@ -61845,6 +61960,22 @@ function formatTimeUntilReset(ms) {
   return `${seconds}s`;
 }
 function formatRateLimitStatus(status) {
+  if (status.apiErrorReason === "rate_limited" && !status.isLimited) {
+    const cachedUsageParts = [];
+    if (typeof status.fiveHourPercent === "number") {
+      cachedUsageParts.push(`5-hour ${status.fiveHourPercent}%`);
+    }
+    if (typeof status.weeklyPercent === "number") {
+      cachedUsageParts.push(`weekly ${status.weeklyPercent}%`);
+    }
+    if (typeof status.monthlyPercent === "number") {
+      cachedUsageParts.push(`monthly ${status.monthlyPercent}%`);
+    }
+    if (cachedUsageParts.length > 0) {
+      return `Usage API rate limited; showing stale cached usage (${cachedUsageParts.join(", ")})`;
+    }
+    return "Usage API rate limited; current limit status unavailable";
+  }
   if (!status.isLimited) {
     return "Not rate limited";
   }
@@ -61862,7 +61993,16 @@ function formatRateLimitStatus(status) {
   if (status.timeUntilResetMs !== null) {
     message += ` (resets in ${formatTimeUntilReset(status.timeUntilResetMs)})`;
   }
+  if (status.apiErrorReason === "rate_limited") {
+    message += " [usage API 429; cached data]";
+  }
   return message;
+}
+function isRateLimitStatusDegraded(status) {
+  return status?.apiErrorReason === "rate_limited";
+}
+function shouldMonitorBlockedPanes(status) {
+  return !!status && (status.isLimited || isRateLimitStatusDegraded(status));
 }
 
 // src/features/rate-limit-wait/index.ts
@@ -62115,8 +62255,8 @@ async function pollLoop2(config2) {
           (_, reject) => setTimeout(() => reject(new Error("checkRateLimitStatus timed out after 30s")), 3e4)
         )
       ]);
-      const wasLimited = state.rateLimitStatus?.isLimited ?? false;
-      const isNowLimited = rateLimitStatus?.isLimited ?? false;
+      const wasLimited = shouldMonitorBlockedPanes(state.rateLimitStatus);
+      const isNowLimited = shouldMonitorBlockedPanes(rateLimitStatus);
       state.rateLimitStatus = rateLimitStatus;
       if (rateLimitStatus) {
         log2(`Rate limit status: ${formatRateLimitStatus(rateLimitStatus)}`, config2);
@@ -62124,7 +62264,8 @@ async function pollLoop2(config2) {
         log2("Rate limit status unavailable (no OAuth credentials?)", config2);
       }
       if (isNowLimited && isTmuxAvailable()) {
-        log2("Rate limited - scanning for blocked panes", config2);
+        const scanReason = rateLimitStatus?.isLimited ? "Rate limited - scanning for blocked panes" : "Usage API degraded (429/stale cache) - scanning for blocked panes";
+        log2(scanReason, config2);
         const blockedPanes = scanForBlockedPanes(config2.paneLinesToCapture);
         for (const pane of blockedPanes) {
           const existing = state.blockedPanes.find((p) => p.id === pane.id);
@@ -62393,6 +62534,15 @@ ${formatRateLimitStatus(rateLimitStatus)}
       console.log(source_default.green("\u2713 Auto-resume daemon is running"));
       console.log(source_default.gray("  Your session will resume automatically when the limit clears.\n"));
     }
+  } else if (isRateLimitStatusDegraded(rateLimitStatus)) {
+    console.log(source_default.yellow.bold("\u26A0\uFE0F  Usage API Rate Limited"));
+    console.log(source_default.yellow(`
+${formatRateLimitStatus(rateLimitStatus)}
+`));
+    if (daemonRunning) {
+      console.log(source_default.gray("Auto-resume daemon is running while usage data is stale."));
+      console.log(source_default.gray("Blocked panes can still be tracked if detected.\n"));
+    }
   } else {
     console.log(source_default.green("\u2713 Not rate limited\n"));
     if (daemonRunning) {
@@ -62427,6 +62577,8 @@ async function waitStatusCommand(options) {
       if (rateLimitStatus.weeklyLimited && rateLimitStatus.weeklyResetsAt) {
         console.log(source_default.gray(`    Weekly resets: ${rateLimitStatus.weeklyResetsAt.toLocaleString()}`));
       }
+    } else if (isRateLimitStatusDegraded(rateLimitStatus)) {
+      console.log(source_default.yellow(`  \u26A0 ${formatRateLimitStatus(rateLimitStatus)}`));
     } else {
       console.log(source_default.green("  \u2713 Not rate limited"));
       console.log(source_default.gray(`    5-hour: ${rateLimitStatus.fiveHourLimited ? "100%" : "OK"}`));
@@ -66401,6 +66553,10 @@ var program2 = new Command();
 warnIfWin32();
 async function defaultAction() {
   const args = process.argv.slice(2);
+  if (args[0] === "ask") {
+    await askCommand(args.slice(1));
+    return;
+  }
   await launchCommand(args);
 }
 program2.name("omc").description("Multi-agent orchestration system for Claude Agent SDK").version(version2).allowUnknownOption().action(defaultAction);
