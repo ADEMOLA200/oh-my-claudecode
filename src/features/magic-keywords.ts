@@ -36,7 +36,7 @@ function isInformationalKeywordContext(text: string, position: number, keywordLe
 }
 
 function hasActionableTrigger(text: string, trigger: string): boolean {
-  const pattern = new RegExp(`\\b${trigger}\\b`, 'gi');
+  const pattern = createTriggerRegex(trigger, 'gi');
 
   for (const match of text.matchAll(pattern)) {
     if (match.index === undefined) {
@@ -51,6 +51,24 @@ function hasActionableTrigger(text: string, trigger: string): boolean {
   }
 
   return false;
+}
+
+/**
+ * Escape regex metacharacters so a string matches literally inside new RegExp().
+ */
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Match triggers literally while preserving "whole token" behavior for word characters.
+ *
+ * `\\b...\\b` is unsafe for unescaped custom triggers and also fails for literals like `c++`
+ * because `+` is not a word character. Using word-boundary lookarounds preserves the intent
+ * without interpreting trigger content as regex.
+ */
+function createTriggerRegex(trigger: string, flags: string): RegExp {
+  return new RegExp(`(?<!\\w)${escapeRegExp(trigger)}(?!\\w)`, flags);
 }
 
 /**
@@ -363,7 +381,7 @@ Use maximum cognitive effort before responding.`;
 function removeTriggerWords(prompt: string, triggers: string[]): string {
   let result = prompt;
   for (const trigger of triggers) {
-    const regex = new RegExp(`\\b${trigger}\\b`, 'gi');
+    const regex = createTriggerRegex(trigger, 'gi');
     result = result.replace(regex, '');
   }
   return result.trim();
