@@ -11,7 +11,7 @@ Complete reference for oh-my-claudecode. For quick start, see the main [README.m
 - [CLI Commands: ask/team/session](#cli-commands-askteamsession)
 - [Legacy MCP Team Runtime Tools (Deprecated)](#legacy-mcp-team-runtime-tools-deprecated)
 - [Agents (29 Total)](#agents-29-total)
-- [Skills (31 Total)](#skills-31-total)
+- [Skills (32 Total)](#skills-32-total)
 - [Slash Commands](#slash-commands)
 - [Hooks System](#hooks-system)
 - [Magic Keywords](#magic-keywords)
@@ -366,9 +366,9 @@ Always use `oh-my-claudecode:` prefix when calling via Task tool.
 
 ---
 
-## Skills (31 Total)
+## Skills (32 Total)
 
-Includes **30 canonical skills + 1 deprecated alias** (`psm`). Runtime truth comes from the builtin skill loader scanning `skills/*/SKILL.md` and expanding aliases declared in frontmatter.
+Includes **31 canonical skills + 1 deprecated alias** (`psm`). Runtime truth comes from the builtin skill loader scanning `skills/*/SKILL.md` and expanding aliases declared in frontmatter.
 
 | Skill                     | Description                                                      | Manual Command                              |
 | ------------------------- | ---------------------------------------------------------------- | ------------------------------------------- |
@@ -387,6 +387,7 @@ Includes **30 canonical skills + 1 deprecated alias** (`psm`). Runtime truth com
 | `mcp-setup`               | Configure MCP servers                                            | `/oh-my-claudecode:mcp-setup`               |
 | `omc-doctor`              | Diagnose and fix installation issues                             | `/oh-my-claudecode:omc-doctor`              |
 | `omc-plan`                | Planning workflow (`/plan` safe alias)                           | `/oh-my-claudecode:omc-plan`                |
+| `omc-reference`           | Detailed OMC agent/tools/team/commit reference skill             | Auto-loaded reference only                  |
 | `omc-setup`               | One-time setup wizard                                            | `/oh-my-claudecode:omc-setup`               |
 | `omc-teams`               | Spawn `claude`/`codex`/`gemini` tmux workers for parallel execution | `/oh-my-claudecode:omc-teams`             |
 | `project-session-manager` | Manage isolated dev environments (git worktrees + tmux)          | `/oh-my-claudecode:project-session-manager` |

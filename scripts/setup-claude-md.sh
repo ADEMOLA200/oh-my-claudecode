@@ -12,6 +12,7 @@ DOWNLOAD_URL="https://raw.githubusercontent.com/Yeachan-Heo/oh-my-claudecode/mai
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CANONICAL_CLAUDE_MD="${SCRIPT_PLUGIN_ROOT}/docs/CLAUDE.md"
+CANONICAL_OMC_REFERENCE_SKILL="${SCRIPT_PLUGIN_ROOT}/skills/omc-reference/SKILL.md"
 
 ensure_local_omc_git_exclude() {
   local exclude_path
@@ -47,15 +48,47 @@ EOF
 
 # Determine target path
 if [ "$MODE" = "local" ]; then
-  mkdir -p .claude
+  mkdir -p .claude/skills/omc-reference
   TARGET_PATH=".claude/CLAUDE.md"
+  SKILL_TARGET_PATH=".claude/skills/omc-reference/SKILL.md"
 elif [ "$MODE" = "global" ]; then
-  mkdir -p "$HOME/.claude"
+  mkdir -p "$HOME/.claude/skills/omc-reference"
   TARGET_PATH="$HOME/.claude/CLAUDE.md"
+  SKILL_TARGET_PATH="$HOME/.claude/skills/omc-reference/SKILL.md"
 else
   echo "ERROR: Invalid mode '$MODE'. Use 'local' or 'global'." >&2
   exit 1
 fi
+
+
+install_omc_reference_skill() {
+  local source_label=""
+  local temp_skill
+  temp_skill=$(mktemp /tmp/omc-reference-skill-XXXXXX.md)
+
+  if [ -f "$CANONICAL_OMC_REFERENCE_SKILL" ]; then
+    cp "$CANONICAL_OMC_REFERENCE_SKILL" "$temp_skill"
+    source_label="$CANONICAL_OMC_REFERENCE_SKILL"
+  elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/skills/omc-reference/SKILL.md" ]; then
+    cp "${CLAUDE_PLUGIN_ROOT}/skills/omc-reference/SKILL.md" "$temp_skill"
+    source_label="${CLAUDE_PLUGIN_ROOT}/skills/omc-reference/SKILL.md"
+  else
+    rm -f "$temp_skill"
+    echo "Skipped omc-reference skill install (canonical skill source unavailable)"
+    return 0
+  fi
+
+  if [ ! -s "$temp_skill" ]; then
+    rm -f "$temp_skill"
+    echo "Skipped omc-reference skill install (empty canonical skill source: $source_label)"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$SKILL_TARGET_PATH")"
+  cp "$temp_skill" "$SKILL_TARGET_PATH"
+  rm -f "$temp_skill"
+  echo "Installed omc-reference skill to $SKILL_TARGET_PATH"
+}
 
 # Extract old version before download
 OLD_VERSION=$(grep -m1 'OMC:VERSION:' "$TARGET_PATH" 2>/dev/null | sed -E 's/.*OMC:VERSION:([^ ]+).*/\1/' || true)
@@ -176,6 +209,8 @@ if ! grep -q '<!-- OMC:START -->' "$TARGET_PATH" || ! grep -q '<!-- OMC:END -->'
   echo "ERROR: Installed CLAUDE.md is missing required OMC markers: $TARGET_PATH" >&2
   exit 1
 fi
+
+install_omc_reference_skill
 
 if [ "$MODE" = "local" ]; then
   ensure_local_omc_git_exclude

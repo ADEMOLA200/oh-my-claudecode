@@ -27,11 +27,20 @@ function createPluginFixture(claudeMdContent: string) {
 
   mkdirSync(join(pluginRoot, 'scripts'), { recursive: true });
   mkdirSync(join(pluginRoot, 'docs'), { recursive: true });
+  mkdirSync(join(pluginRoot, 'skills', 'omc-reference'), { recursive: true });
   mkdirSync(projectRoot, { recursive: true });
   mkdirSync(homeRoot, { recursive: true });
 
   copyFileSync(SETUP_SCRIPT, join(pluginRoot, 'scripts', 'setup-claude-md.sh'));
   writeFileSync(join(pluginRoot, 'docs', 'CLAUDE.md'), claudeMdContent);
+  writeFileSync(join(pluginRoot, 'skills', 'omc-reference', 'SKILL.md'), `---
+name: omc-reference
+description: Test fixture reference skill
+user-invocable: false
+---
+
+# Test OMC Reference
+`);
 
   return {
     pluginRoot,
@@ -79,6 +88,10 @@ Use the real docs file.
     expect(installed).toContain('<!-- OMC:END -->');
     expect(installed).toContain('<!-- OMC:VERSION:9.9.9 -->');
     expect(installed).toContain('# Canonical CLAUDE');
+
+    const installedSkillPath = join(fixture.projectRoot, '.claude', 'skills', 'omc-reference', 'SKILL.md');
+    expect(existsSync(installedSkillPath)).toBe(true);
+    expect(readFileSync(installedSkillPath, 'utf-8')).toContain('# Test OMC Reference');
   });
 
   it('refuses to install a canonical source that lacks OMC markers', () => {

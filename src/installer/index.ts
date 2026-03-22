@@ -484,6 +484,16 @@ function loadCommandDefinitions(): Record<string, string> {
 /**
  * Load CLAUDE.md content from /docs/CLAUDE.md
  */
+function loadBundledSkillContent(skillName: string): string | null {
+  const skillPath = join(getPackageDir(), 'skills', skillName, 'SKILL.md');
+
+  if (!existsSync(skillPath)) {
+    return null;
+  }
+
+  return readFileSync(skillPath, 'utf-8');
+}
+
 function loadClaudeMdContent(): string {
   const claudeMdPath = join(getPackageDir(), 'docs', 'CLAUDE.md');
 
@@ -781,6 +791,22 @@ export function install(options: InstallOptions = {}): InstallResult {
 
       // NOTE: SKILL_DEFINITIONS removed - skills now only installed via COMMAND_DEFINITIONS
       // to avoid duplicate entries in Claude Code's available skills list
+
+      const omcReferenceSkillContent = loadBundledSkillContent('omc-reference');
+      if (omcReferenceSkillContent) {
+        const omcReferenceDir = join(SKILLS_DIR, 'omc-reference');
+        const omcReferencePath = join(omcReferenceDir, 'SKILL.md');
+        if (!existsSync(omcReferenceDir)) {
+          mkdirSync(omcReferenceDir, { recursive: true });
+        }
+        if (existsSync(omcReferencePath) && !options.force) {
+          log('  Skipping omc-reference/SKILL.md (already exists)');
+        } else {
+          writeFileSync(omcReferencePath, omcReferenceSkillContent);
+          result.installedSkills.push('omc-reference/SKILL.md');
+          log('  Installed omc-reference/SKILL.md');
+        }
+      }
 
       // Install CLAUDE.md with merge support
       const claudeMdPath = join(CLAUDE_CONFIG_DIR, 'CLAUDE.md');
