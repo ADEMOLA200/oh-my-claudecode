@@ -120,8 +120,12 @@ preserve their state (e.g. autopilot preserves resume data).
 
 ```bash
 # Fallback: direct file removal when state_clear MCP tool is unavailable
-SESSION_ID="${CLAUDE_SESSION_ID:-}"
+SESSION_ID="${CLAUDE_SESSION_ID:-${CLAUDECODE_SESSION_ID:-}}"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || { d="$PWD"; while [ "$d" != "/" ] && [ ! -d "$d/.omc" ]; do d="$(dirname "$d")"; done; echo "$d"; })"
+if [ "$REPO_ROOT" = "/" ] || [ ! -d "$REPO_ROOT/.omc" ]; then
+  echo "ERROR: Could not locate .omc state directory" >&2
+  exit 1
+fi
 OMC_STATE="$REPO_ROOT/.omc/state"
 MODE="ralplan"  # <-- replace with the target mode
 
