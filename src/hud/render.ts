@@ -448,12 +448,19 @@ export async function render(
     return result;
   }
 
-  /** Collect detail lines in layout order */
+  /** Collect detail lines in layout order.
+   *  Also picks up inline elements moved to the detail group —
+   *  they become individual detail lines when placed here. */
   function collectDetailLines(order: string[]): string[] {
     const result: string[] = [];
     for (const name of order) {
       const lines = renderedDetail.get(name);
       if (lines) result.push(...lines);
+      // Inline elements moved to the detail group render as detail lines
+      if (!lines) {
+        const inline = rendered.get(name);
+        if (inline) result.push(inline);
+      }
     }
     return result;
   }
