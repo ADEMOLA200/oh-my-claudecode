@@ -180,6 +180,30 @@ describe('detectBashFailure', () => {
       expect(detectBashFailure('All tests passed')).toBe(false);
     });
 
+    it('should ignore quoted error field string literals', () => {
+      expect(detectBashFailure(`return { rateLimits: fallbackData, error: 'network', stale: true };`)).toBe(false);
+    });
+
+    it('should ignore severity metadata lines', () => {
+      expect(detectBashFailure(`"severity": "error"`)).toBe(false);
+    });
+
+    it('should ignore quoted field names inside inert object literals', () => {
+      expect(detectBashFailure(`{ "error": "rate limit", "severity": "warning" }`)).toBe(false);
+    });
+
+    it('should ignore zero-error summaries', () => {
+      expect(detectBashFailure('totalErrors: 0, totalWarnings: 3')).toBe(false);
+    });
+
+    it('should still detect real stack traces and command failures', () => {
+      const output = [
+        'Error: build failed',
+        '    at runBuild (/workspace/scripts/build.mjs:12:7)',
+      ].join('\n');
+      expect(detectBashFailure(output)).toBe(true);
+    });
+
     it('should return false for empty output', () => {
       expect(detectBashFailure('')).toBe(false);
     });
@@ -250,6 +274,23 @@ describe('isNonZeroExitWithOutput (issue #960)', () => {
 
     it('no exit code prefix at all', () => {
       expect(isNonZeroExitWithOutput('some normal output')).toBe(false);
+    });
+
+    it('keeps valid stdout classification when remaining lines are only non-actionable error metadata', () => {
+      const output = [
+        'Error: Exit code 8',
+        '"severity": "error"',
+        'totalErrors: 0',
+      ].join('\n');
+      expect(isNonZeroExitWithOutput(output)).toBe(false);
+    });
+
+    it('keeps quoted inert literals from being treated as real failure content', () => {
+      const output = [
+        'Error: Exit code 8',
+        `return { error: 'network', totalErrors: 0 };`,
+      ].join('\n');
+      expect(isNonZeroExitWithOutput(output)).toBe(false);
     });
 
     it('empty string', () => {
