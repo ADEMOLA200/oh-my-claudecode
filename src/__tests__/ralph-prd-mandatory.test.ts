@@ -348,26 +348,36 @@ describe('Ralph PRD-Mandatory', () => {
       const prompt = getArchitectVerificationPrompt({
         ...baseVerificationState,
         critic_mode: 'critic',
+        request_id: 'req-critic',
       });
 
       expect(prompt).toContain('[CRITIC VERIFICATION REQUIRED');
       expect(prompt).toContain('Task(subagent_type="critic"');
-      expect(prompt).toContain('<ralph-approved critic="critic">VERIFIED_COMPLETE</ralph-approved>');
+      expect(prompt).toContain('<ralph-approved critic="critic" request-id="req-critic">VERIFIED_COMPLETE</ralph-approved>');
     });
 
     it('should support codex verification prompts', () => {
       const prompt = getArchitectVerificationPrompt({
         ...baseVerificationState,
         critic_mode: 'codex',
+        request_id: 'req-codex',
       });
 
       expect(prompt).toContain('[CODEX CRITIC VERIFICATION REQUIRED');
       expect(prompt).toContain('omc ask codex --agent-prompt critic');
-      expect(prompt).toContain('<ralph-approved critic="codex">VERIFIED_COMPLETE</ralph-approved>');
+      expect(prompt).toContain('<ralph-approved critic="codex" request-id="req-codex">VERIFIED_COMPLETE</ralph-approved>');
     });
 
     it('detects generic Ralph approval markers', () => {
       expect(detectArchitectApproval('<ralph-approved critic="codex">VERIFIED_COMPLETE</ralph-approved>')).toBe(true);
+    });
+
+    it('requires matching correlated approval attributes when expected', () => {
+      const staleApproval = '<ralph-approved critic="codex" request-id="old-request" story-id="US-001">VERIFIED_COMPLETE</ralph-approved>';
+      const freshApproval = '<ralph-approved critic="codex" request-id="new-request" story-id="US-001">VERIFIED_COMPLETE</ralph-approved>';
+
+      expect(detectArchitectApproval(`${staleApproval}\n${freshApproval}`, { request_id: 'new-request', story_id: 'US-001' })).toBe(true);
+      expect(detectArchitectApproval(staleApproval, { request_id: 'new-request', story_id: 'US-001' })).toBe(false);
     });
 
     it('detects codex-style rejection language', () => {

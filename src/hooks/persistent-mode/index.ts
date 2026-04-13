@@ -44,6 +44,7 @@ import {
   detectArchitectApproval,
   detectArchitectRejection,
   clearVerificationState,
+  type VerificationState,
 } from '../ralph/index.js';
 import { checkIncompleteTodos, getNextPendingTodo, StopContext, isUserAbort, isContextLimitStop, isRateLimitStop, isExplicitCancelCommand, isAuthenticationError } from '../todo-continuation/index.js';
 import { TODO_CONTINUATION_PROMPT } from '../../installer/hooks.js';
@@ -514,7 +515,10 @@ function isAwaitingConfirmation(state: unknown): boolean {
 /**
  * Check for architect approval in session transcript
  */
-function checkArchitectApprovalInTranscript(sessionId: string): boolean {
+function checkArchitectApprovalInTranscript(
+  sessionId: string,
+  verificationState?: Pick<VerificationState, 'request_id' | 'story_id'>
+): boolean {
   const claudeDir = getClaudeConfigDir();
   const possiblePaths = [
     join(claudeDir, 'sessions', sessionId, 'transcript.md'),
@@ -526,7 +530,7 @@ function checkArchitectApprovalInTranscript(sessionId: string): boolean {
     if (existsSync(transcriptPath)) {
       try {
         const content = readTranscriptTail(transcriptPath);
-        if (detectArchitectApproval(content)) {
+        if (detectArchitectApproval(content, verificationState)) {
           return true;
         }
       } catch {
@@ -678,7 +682,7 @@ async function checkRalphLoop(
     // Verification is in progress - check for architect's response
     if (sessionId) {
       // Check for architect approval
-      if (checkArchitectApprovalInTranscript(sessionId)) {
+      if (checkArchitectApprovalInTranscript(sessionId, verificationState)) {
         if (verificationState.verification_scope === 'story' && verificationState.story_id) {
           markStoryArchitectVerified(workingDir, verificationState.story_id);
           clearVerificationState(workingDir, sessionId);

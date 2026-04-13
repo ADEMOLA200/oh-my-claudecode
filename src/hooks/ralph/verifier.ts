@@ -12,6 +12,7 @@
  * 5. If architect finds flaws -> continue ralph with architect feedback
  */
 
+import { randomUUID } from 'crypto';
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { resolveSessionStatePath, ensureSessionStateDir, getOmcRoot } from '../../lib/worktree-paths.js';
@@ -42,10 +43,16 @@ export interface VerificationState {
   story_id?: string;
   /** Reviewer mode to use for verification */
   critic_mode?: RalphCriticMode;
+  /** Unique request id used to correlate approvals to the current verification attempt */
+  request_id?: string;
 }
 
 const DEFAULT_MAX_VERIFICATION_ATTEMPTS = 3;
 const DEFAULT_RALPH_CRITIC_MODE: RalphCriticMode = 'architect';
+
+function createVerificationRequestId(): string {
+  return randomUUID();
+}
 
 function getCriticMode(mode?: RalphCriticMode): RalphCriticMode {
   return mode ?? DEFAULT_RALPH_CRITIC_MODE;
@@ -104,7 +111,12 @@ export function readVerificationState(directory: string, sessionId?: string): Ve
     return null;
   }
   try {
-    return JSON.parse(readFileSync(statePath, 'utf-8'));
+    const state = JSON.parse(readFileSync(statePath, 'utf-8')) as VerificationState;
+    if (!state.request_id) {
+      state.request_id = createVerificationRequestId();
+      writeVerificationState(directory, state, sessionId);
+    }
+    return state;
   } catch {
     return null;
   }
@@ -174,7 +186,8 @@ export function startVerification(
     original_task: originalTask,
     verification_scope: currentStory ? 'story' : 'completion',
     story_id: currentStory?.id,
-    critic_mode: getCriticMode(criticMode)
+    critic_mode: getCriticMode(criticMode),
+    request_id: createVerificationRequestId()
   };
 
   writeVerificationState(directory, state, sessionId);
@@ -222,7 +235,7 @@ export function recordArchitectFeedback(
  */
 export function getArchitectVerificationPrompt(state: VerificationState, currentStory?: UserStory): string {
   const criticLabel = getCriticLabel(state.critic_mode);
-  const approvalTag = `<ralph-approved critic="${getCriticMode(state.critic_mode)}">VERIFIED_COMPLETE</ralph-approved>`;
+  const approvalTag = `<ralph-approved critic="${getCriticMode(state.critic_mode)}" request-id="${state.request_id}"${state.story_id ? ` story-id="${state.story_id}"` : ''}>VERIFIED_COMPLETE</ralph-approved>`;
   const storySection = currentStory ? `
 **Current Story: ${currentStory.id} - ${currentStory.title}**
 ${currentStory.description}
@@ -261,7 +274,7 @@ ${getVerificationAgentStep(state.critic_mode)}
    - Are tests passing (if applicable)?
 
 3. **Based on ${criticLabel}'s response:**
-   - If APPROVED: Output \`${approvalTag}\`, then run \`/oh-my-claudecode:cancel\` to cleanly exit
+   - If APPROVED: Output the exact correlated approval tag \`${approvalTag}\`, then run \`/oh-my-claudecode:cancel\` to cleanly exit
    - If REJECTED: Continue working on the identified issues
 
 </ralph-verification>
@@ -307,8 +320,44 @@ Continue working now.
 /**
  * Check if text contains architect approval
  */
-export function detectArchitectApproval(text: string): boolean {
-  return /<(?:architect-approved|ralph-approved)(?:\s+[^>]*)?>.*?VERIFIED_COMPLETE.*?<\/(?:architect-approved|ralph-approved)>/is.test(text);
+function extractApprovalAttribute(attributes: string, attributeName: string): string | undefined {
+  const match = new RegExp(`\\b${attributeName}=(["'])(.*?)\\1`, 'i').exec(attributes);
+  return match?.[2];
+}
+
+export function detectArchitectApproval(
+  text: string,
+  expected?: Pick<VerificationState, 'request_id' | 'story_id'>
+): boolean {
+  const matches = text.matchAll(/<(?:architect-approved|ralph-approved)\b([^>]*)>.*?VERIFIED_COMPLETE.*?<\/(?:architect-approved|ralph-approved)>/gis);
+
+  for (const match of matches) {
+    const attributes = match[1] ?? '';
+
+    if (!expected) {
+      return true;
+    }
+
+    if (!expected.request_id) {
+      continue;
+    }
+
+    const requestId = extractApprovalAttribute(attributes, 'request-id');
+    if (requestId !== expected.request_id) {
+      continue;
+    }
+
+    if (expected.story_id) {
+      const storyId = extractApprovalAttribute(attributes, 'story-id');
+      if (storyId !== expected.story_id) {
+        continue;
+      }
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
 /**
