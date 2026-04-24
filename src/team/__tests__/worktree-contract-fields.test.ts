@@ -128,6 +128,8 @@ describe('native worktree contract fields', () => {
       const { mkdir } = await import('fs/promises');
       await mkdir(join(cwd, '.omc', 'state', 'team', 'demo-team', 'workers', 'worker-1'), { recursive: true });
 
+      const previousStateRoot = process.env.OMC_TEAM_STATE_ROOT;
+      delete process.env.OMC_TEAM_STATE_ROOT;
       const result = await executeTeamApiOperation('write-worker-identity', {
         team_name: 'demo-team',
         worker: 'worker-1',
@@ -141,6 +143,11 @@ describe('native worktree contract fields', () => {
         worktree_created: true,
         team_state_root: join(cwd, '.omc', 'state'),
       }, cwd);
+      if (previousStateRoot === undefined) {
+        delete process.env.OMC_TEAM_STATE_ROOT;
+      } else {
+        process.env.OMC_TEAM_STATE_ROOT = previousStateRoot;
+      }
       expect(result.ok).toBe(true);
 
       const identity = JSON.parse(await readFile(join(cwd, '.omc', 'state', 'team', 'demo-team', 'workers', 'worker-1', 'identity.json'), 'utf-8')) as WorkerInfo;
