@@ -238,6 +238,29 @@ export {
 export { readLatestTeamProgressEvidenceMs } from './progress-evidence.js';
 
 export {
+  appendTeamCommitHygieneEntries,
+  buildTeamCommitHygieneContext,
+  readTeamCommitHygieneLedger,
+  renderTeamCommitHygieneMarkdown,
+  resolveTeamCommitHygieneArtifactCwd,
+  resolveTeamCommitHygieneArtifactPaths,
+  TEAM_OPERATIONAL_COMMIT_KINDS,
+  TEAM_OPERATIONAL_COMMIT_STATUSES,
+  writeTeamCommitHygieneContext,
+} from './commit-hygiene.js';
+export type {
+  TeamCommitHygieneArtifactPaths,
+  TeamCommitHygieneContext,
+  TeamCommitHygieneLedger,
+  TeamCommitHygieneTaskSummary,
+  TeamCommitHygieneVocabulary,
+  TeamCommitHygieneVocabularyTerm,
+  TeamOperationalCommitEntry,
+  TeamOperationalCommitKind,
+  TeamOperationalCommitStatus,
+} from './commit-hygiene.js';
+
+export {
   checkSentinelReadiness,
   waitForSentinelReadiness,
 } from './sentinel-gate.js';
