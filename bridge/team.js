@@ -594,7 +594,7 @@ async function withMailboxLock(teamName, workerName, cwd, fn) {
   while (Date.now() < deadline) {
     const result = await withLock(lockDir, fn);
     if (result.ok) return result.value;
-    await new Promise((resolve5) => setTimeout(resolve5, delayMs));
+    await new Promise((resolve6) => setTimeout(resolve6, delayMs));
     delayMs = Math.min(delayMs * 2, 200);
   }
   throw new Error(`Failed to acquire mailbox lock for ${workerName} after ${timeoutMs}ms`);
@@ -700,7 +700,7 @@ async function teamCreateTask(teamName, task, cwd) {
       return created;
     });
     if (result.ok) return result.value;
-    await new Promise((resolve5) => setTimeout(resolve5, delayMs));
+    await new Promise((resolve6) => setTimeout(resolve6, delayMs));
     delayMs = Math.min(delayMs * 2, 200);
   }
   throw new Error(`Failed to acquire task creation lock for team ${teamName} after ${timeoutMs}ms`);
@@ -740,7 +740,7 @@ async function teamUpdateTask(teamName, taskId, updates, cwd) {
       return merged;
     });
     if (result.ok) return result.value;
-    await new Promise((resolve5) => setTimeout(resolve5, delayMs));
+    await new Promise((resolve6) => setTimeout(resolve6, delayMs));
     delayMs = Math.min(delayMs * 2, 200);
   }
   throw new Error(`Failed to acquire task update lock for task ${taskId} in team ${teamName} after ${timeoutMs}ms`);
@@ -1143,7 +1143,7 @@ async function withDispatchLock(teamName, cwd, fn) {
         );
       }
       const jitter = 0.5 + Math.random() * 0.5;
-      await new Promise((resolve5) => setTimeout(resolve5, Math.floor(pollMs * jitter)));
+      await new Promise((resolve6) => setTimeout(resolve6, Math.floor(pollMs * jitter)));
       pollMs = Math.min(pollMs * 2, DISPATCH_LOCK_MAX_POLL_MS);
     }
   }
@@ -2536,7 +2536,7 @@ async function waitForTeamEvent(teamName, cwd, options = {}) {
     if (Date.now() >= deadline) {
       return { status: "timeout", cursor };
     }
-    await new Promise((resolve5) => setTimeout(resolve5, Math.min(pollMs, Math.max(0, deadline - Date.now()))));
+    await new Promise((resolve6) => setTimeout(resolve6, Math.min(pollMs, Math.max(0, deadline - Date.now()))));
   }
 }
 async function emitMonitorDerivedEvents(teamName, tasks, workers, previousSnapshot, cwd) {
@@ -5343,7 +5343,7 @@ function withFileLockSync(lockPath, fn, opts) {
   }
 }
 function sleep2(ms) {
-  return new Promise((resolve5) => setTimeout(resolve5, ms));
+  return new Promise((resolve6) => setTimeout(resolve6, ms));
 }
 async function acquireFileLock(lockPath, opts) {
   const staleLockMs = opts?.staleLockMs ?? DEFAULT_STALE_LOCK_MS;
@@ -7068,8 +7068,8 @@ async function startMergeOrchestrator(config) {
   let persisted = { lastShas: {} };
   if (existsSync17(persistedPath)) {
     try {
-      const { readFileSync: readFileSync12 } = await import("node:fs");
-      persisted = JSON.parse(readFileSync12(persistedPath, "utf-8"));
+      const { readFileSync: readFileSync13 } = await import("node:fs");
+      persisted = JSON.parse(readFileSync13(persistedPath, "utf-8"));
     } catch {
       persisted = { lastShas: {} };
     }
@@ -7403,8 +7403,8 @@ ${dirtyFiles.map((f) => `- \`${f}\``).join("\n")}`;
               return false;
             }
           })(),
-          new Promise((resolve5) => {
-            const t = setTimeout(() => resolve5(false), remaining);
+          new Promise((resolve6) => {
+            const t = setTimeout(() => resolve6(false), remaining);
             if (typeof t.unref === "function") t.unref();
           })
         ]);
@@ -7458,8 +7458,8 @@ async function recoverFromRestart(config) {
   let persistedShasLoaded = 0;
   if (existsSync17(persistedPath)) {
     try {
-      const { readFileSync: readFileSync12 } = await import("node:fs");
-      const persisted = JSON.parse(readFileSync12(persistedPath, "utf-8"));
+      const { readFileSync: readFileSync13 } = await import("node:fs");
+      const persisted = JSON.parse(readFileSync13(persistedPath, "utf-8"));
       persistedShasLoaded = Object.keys(persisted.lastShas ?? {}).length;
     } catch {
       persistedShasLoaded = 0;
@@ -7744,7 +7744,7 @@ async function waitForWorkerStartupEvidence(teamName, workerName, taskId, cwd, a
       return true;
     }
     if (attempt < attempts) {
-      await new Promise((resolve5) => setTimeout(resolve5, delayMs));
+      await new Promise((resolve6) => setTimeout(resolve6, delayMs));
     }
   }
   return false;
@@ -8435,10 +8435,10 @@ async function requeueDeadWorkerTasks(teamName, deadWorkerNames, cwd) {
     await writeFile8(sidecarPath, JSON.stringify(sidecar, null, 2), "utf-8");
     const taskPath2 = absPath(cwd, TeamPaths.taskFile(sanitized, task.id));
     try {
-      const { readFileSync: readFileSync12, writeFileSync: writeFileSync4 } = await import("fs");
+      const { readFileSync: readFileSync13, writeFileSync: writeFileSync4 } = await import("fs");
       const { withFileLockSync: withFileLockSync2 } = await Promise.resolve().then(() => (init_file_lock(), file_lock_exports));
       withFileLockSync2(taskPath2 + ".lock", () => {
-        const raw = readFileSync12(taskPath2, "utf-8");
+        const raw = readFileSync13(taskPath2, "utf-8");
         const taskData = JSON.parse(raw);
         if (taskData.status === "in_progress") {
           taskData.status = "pending";
@@ -8468,7 +8468,7 @@ async function processCliWorkerVerdicts(teamName, cwd) {
     "team.runtime-v2.processCliWorkerVerdicts appendTeamEvent failed"
   );
   const { rename: rename3 } = await import("fs/promises");
-  const { readFileSync: readFileSync12, writeFileSync: writeFileSync4, existsSync: fsExistsSync } = await import("fs");
+  const { readFileSync: readFileSync13, writeFileSync: writeFileSync4, existsSync: fsExistsSync } = await import("fs");
   const { withFileLockSync: withFileLockSync2 } = await Promise.resolve().then(() => (init_file_lock(), file_lock_exports));
   for (const worker of config.workers) {
     const outputFile = worker.output_file;
@@ -8502,7 +8502,7 @@ async function processCliWorkerVerdicts(teamName, cwd) {
       const taskPath2 = absPath(cwd, TeamPaths.taskFile(sanitized, taskId));
       if (!fsExistsSync(taskPath2)) continue;
       try {
-        const taskRaw = readFileSync12(taskPath2, "utf-8");
+        const taskRaw = readFileSync13(taskPath2, "utf-8");
         const taskData = JSON.parse(taskRaw);
         if (taskData.owner === worker.name && taskData.status === "in_progress") {
           targetTaskId = taskId;
@@ -8530,7 +8530,7 @@ async function processCliWorkerVerdicts(teamName, cwd) {
     let transitionOk = false;
     try {
       withFileLockSync2(targetTaskPath + ".lock", () => {
-        const raw = readFileSync12(targetTaskPath, "utf-8");
+        const raw = readFileSync13(targetTaskPath, "utf-8");
         const taskData = JSON.parse(raw);
         if (taskData.status !== "in_progress" || taskData.owner !== worker.name) {
           return;
@@ -9074,11 +9074,11 @@ var init_runtime_v2 = __esm({
 });
 
 // src/cli/team.ts
-import { randomUUID as randomUUID6 } from "crypto";
+import { randomUUID as randomUUID7 } from "crypto";
 import { spawn } from "child_process";
-import { existsSync as existsSync21, mkdirSync as mkdirSync3, readFileSync as readFileSync11, writeFileSync as writeFileSync3 } from "fs";
+import { existsSync as existsSync22, mkdirSync as mkdirSync3, readFileSync as readFileSync12, writeFileSync as writeFileSync3 } from "fs";
 import { readFile as readFile11, rm as rm5 } from "fs/promises";
-import { dirname as dirname16, join as join24 } from "path";
+import { dirname as dirname16, join as join25 } from "path";
 import { fileURLToPath as fileURLToPath3 } from "url";
 
 // src/team/api-interop.ts
@@ -9089,8 +9089,8 @@ init_tmux_session();
 init_dispatch_queue();
 init_events();
 init_worker_bootstrap();
-import { existsSync as existsSync19, readFileSync as readFileSync9 } from "node:fs";
-import { dirname as dirname15, join as join22, resolve as resolvePath } from "node:path";
+import { existsSync as existsSync20, readFileSync as readFileSync10 } from "node:fs";
+import { dirname as dirname15, join as join23, resolve as resolvePath } from "node:path";
 
 // src/team/runtime.ts
 init_tmux_utils();
@@ -9143,7 +9143,7 @@ async function readJsonSafe2(filePath) {
         return null;
       }
     }
-    await new Promise((resolve5) => setTimeout(resolve5, 25));
+    await new Promise((resolve6) => setTimeout(resolve6, 25));
   }
   return null;
 }
@@ -9311,6 +9311,139 @@ async function resumeTeam(teamName, cwd) {
 init_runtime_v2();
 init_git_worktree();
 init_swallowed_error();
+
+// src/team/team-identity.ts
+init_contracts();
+import { createHash, randomUUID as randomUUID6 } from "crypto";
+import { existsSync as existsSync19, readdirSync as readdirSync5, readFileSync as readFileSync9 } from "fs";
+import { join as join22, resolve as resolve5 } from "path";
+var TeamLookupAmbiguityError = class extends Error {
+  candidates;
+  constructor(input, candidates) {
+    super(`ambiguous_team_name:${input}:${candidates.map((candidate) => candidate.teamName).join(",")}`);
+    this.name = "TeamLookupAmbiguityError";
+    this.candidates = candidates;
+  }
+};
+function sanitizeBase(value) {
+  const sanitized = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return sanitized || "team";
+}
+function normalizeLookupName(value) {
+  const sanitized = sanitizeBase(value);
+  const input = sanitized.slice(0, 30).replace(/-$/, "");
+  if (!TEAM_NAME_SAFE_PATTERN.test(input)) {
+    throw new Error(`invalid_team_name:${value}`);
+  }
+  return input;
+}
+function resolveTeamIdentityScope(env = process.env) {
+  const sessionId = (env.OMC_SESSION_ID || env.OMX_SESSION_ID || env.CODEX_SESSION_ID || env.SESSION_ID || "").trim();
+  if (sessionId) {
+    return { sessionId, paneId: (env.TMUX_PANE || "").trim(), tmuxTarget: (env.TMUX || "").trim(), runId: "", source: "env-session" };
+  }
+  const paneId = (env.TMUX_PANE || "").trim();
+  const tmuxTarget = (env.TMUX || "").trim();
+  if (paneId || tmuxTarget) {
+    return { sessionId: "", paneId, tmuxTarget, runId: "", source: "tmux-pane" };
+  }
+  return { sessionId: "", paneId: "", tmuxTarget: "", runId: randomUUID6(), source: "run-id" };
+}
+function readJson(path4) {
+  if (!existsSync19(path4)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync9(path4, "utf8"));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+function str(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+function objectRecord(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function candidateFromDir(root, teamName) {
+  const manifest = readJson(join22(root, teamName, "manifest.json")) ?? readJson(join22(root, teamName, "manifest.v2.json"));
+  const config = readJson(join22(root, teamName, "config.json"));
+  const source = manifest || config;
+  if (!source) return null;
+  const leader = objectRecord(source.leader);
+  const phase = readJson(join22(root, teamName, "phase-state.json")) ?? readJson(join22(root, teamName, "phase.json"));
+  const currentPhase = str(phase?.current_phase);
+  const displayName = str(source.display_name) || str(source.requested_name) || str(config?.display_name) || str(config?.requested_name) || teamName;
+  return {
+    teamName,
+    displayName,
+    requestedName: str(source.requested_name) || str(config?.requested_name) || displayName,
+    leaderSessionId: str(leader.session_id),
+    leaderPaneId: str(source.leader_pane_id) || str(config?.leader_pane_id),
+    tmuxSession: str(source.tmux_session) || str(config?.tmux_session),
+    terminal: currentPhase === "complete" || currentPhase === "completed" || currentPhase === "failed" || currentPhase === "cancelled",
+    phaseUpdatedAt: str(phase?.updated_at)
+  };
+}
+function teamLookupRoots(cwd, env = process.env) {
+  const roots = [];
+  const addStateRoot = (stateRoot2) => {
+    const trimmed = stateRoot2.trim();
+    if (!trimmed) return;
+    const root = join22(resolve5(cwd, trimmed), "team");
+    if (!roots.includes(root)) roots.push(root);
+  };
+  for (const explicit of [env.OMC_TEAM_STATE_ROOT, env.OMX_TEAM_STATE_ROOT]) {
+    if (typeof explicit === "string") addStateRoot(explicit);
+  }
+  addStateRoot(join22(resolve5(cwd), ".omc", "state"));
+  addStateRoot(join22(resolve5(cwd), ".omx", "state"));
+  return roots;
+}
+function listTeamLookupCandidates(cwd, env = process.env) {
+  const byTeamName = /* @__PURE__ */ new Map();
+  for (const root of teamLookupRoots(cwd, env)) {
+    if (!existsSync19(root)) continue;
+    for (const entry of readdirSync5(root, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const candidate = candidateFromDir(root, entry.name);
+      if (candidate && !byTeamName.has(candidate.teamName)) {
+        byTeamName.set(candidate.teamName, candidate);
+      }
+    }
+  }
+  return [...byTeamName.values()];
+}
+function matchingCurrentLeader(candidate, scope) {
+  return Boolean(scope.sessionId) && candidate.leaderSessionId === scope.sessionId || Boolean(scope.paneId) && candidate.leaderPaneId === scope.paneId;
+}
+function selectLatestTerminalCandidate(candidates) {
+  const terminal = candidates.filter((candidate) => candidate.terminal);
+  if (terminal.length === 0) return null;
+  const ranked = terminal.map((candidate) => ({ candidate, time: Date.parse(candidate.phaseUpdatedAt) })).filter((entry) => Number.isFinite(entry.time)).sort((a, b) => b.time - a.time);
+  if (ranked.length === 0) return terminal.length === 1 ? terminal[0] ?? null : null;
+  if (ranked.length === 1 || (ranked[0]?.time ?? 0) > (ranked[1]?.time ?? 0)) return ranked[0]?.candidate ?? null;
+  return null;
+}
+function resolveTeamNameForCurrentContext(inputName, cwd, env = process.env) {
+  const input = normalizeLookupName(inputName);
+  const candidates = listTeamLookupCandidates(cwd, env).filter((candidate) => {
+    return candidate.teamName === input || sanitizeBase(candidate.displayName) === input || sanitizeBase(candidate.requestedName) === input;
+  });
+  if (candidates.length === 0) return input;
+  const scope = resolveTeamIdentityScope(env);
+  const activeCandidates = candidates.filter((candidate) => !candidate.terminal);
+  const lookupCandidates = activeCandidates.length > 0 ? activeCandidates : candidates;
+  if (lookupCandidates.length === 1) return lookupCandidates[0]?.teamName ?? input;
+  const current = lookupCandidates.filter((candidate) => matchingCurrentLeader(candidate, scope));
+  if (current.length === 1) return current[0]?.teamName ?? input;
+  if (activeCandidates.length === 0) {
+    const latestTerminal = selectLatestTerminalCandidate(lookupCandidates);
+    if (latestTerminal) return latestTerminal.teamName;
+  }
+  throw new TeamLookupAmbiguityError(input, current.length > 1 ? current : lookupCandidates);
+}
+
+// src/team/api-interop.ts
 var TEAM_UPDATE_TASK_MUTABLE_FIELDS = /* @__PURE__ */ new Set(["subject", "description", "blocked_by", "requires_code_change", "delegation"]);
 var TEAM_UPDATE_TASK_REQUEST_FIELDS = /* @__PURE__ */ new Set(["team_name", "task_id", "workingDirectory", ...TEAM_UPDATE_TASK_MUTABLE_FIELDS]);
 var TEAM_API_OPERATIONS = [
@@ -9561,8 +9694,8 @@ function parseTaskDelegationPlan(value) {
 }
 function teamStateExists(teamName, candidateCwd) {
   if (!TEAM_NAME_SAFE_PATTERN.test(teamName)) return false;
-  const teamRoot = join22(candidateCwd, ".omc", "state", "team", teamName);
-  return existsSync19(join22(teamRoot, "config.json")) || existsSync19(join22(teamRoot, "tasks")) || existsSync19(teamRoot);
+  const teamRoot = join23(candidateCwd, ".omc", "state", "team", teamName);
+  return existsSync20(join23(teamRoot, "config.json")) || existsSync20(join23(teamRoot, "tasks")) || existsSync20(teamRoot);
 }
 function parseTeamWorkerEnv(raw) {
   if (typeof raw !== "string" || raw.trim() === "") return null;
@@ -9616,9 +9749,9 @@ async function executeTeamCleanupViaRuntime(teamName, cwd) {
   await teamCleanup(teamName, cwd);
 }
 function readTeamStateRootFromFile(path4) {
-  if (!existsSync19(path4)) return null;
+  if (!existsSync20(path4)) return null;
   try {
-    const parsed = JSON.parse(readFileSync9(path4, "utf8"));
+    const parsed = JSON.parse(readFileSync10(path4, "utf8"));
     return typeof parsed.team_state_root === "string" && parsed.team_state_root.trim() !== "" ? parsed.team_state_root.trim() : null;
   } catch {
     return null;
@@ -9646,16 +9779,16 @@ function stateRootToWorkingDirectory(stateRoot2) {
   return dirname15(dirname15(absolute));
 }
 function resolveTeamWorkingDirectoryFromMetadata(teamName, candidateCwd, workerContext) {
-  const teamRoot = join22(candidateCwd, ".omc", "state", "team", teamName);
-  if (!existsSync19(teamRoot)) return null;
+  const teamRoot = join23(candidateCwd, ".omc", "state", "team", teamName);
+  if (!existsSync20(teamRoot)) return null;
   if (workerContext?.teamName === teamName) {
-    const workerRoot = readTeamStateRootFromFile(join22(teamRoot, "workers", workerContext.workerName, "identity.json"));
+    const workerRoot = readTeamStateRootFromFile(join23(teamRoot, "workers", workerContext.workerName, "identity.json"));
     if (workerRoot) return stateRootToWorkingDirectory(workerRoot);
   }
-  const fromConfig = readTeamStateRootFromFile(join22(teamRoot, "config.json"));
+  const fromConfig = readTeamStateRootFromFile(join23(teamRoot, "config.json"));
   if (fromConfig) return stateRootToWorkingDirectory(fromConfig);
   for (const manifestName of ["manifest.json", "manifest.v2.json"]) {
-    const fromManifest = readTeamStateRootFromFile(join22(teamRoot, manifestName));
+    const fromManifest = readTeamStateRootFromFile(join23(teamRoot, manifestName));
     if (fromManifest) return stateRootToWorkingDirectory(fromManifest);
   }
   return null;
@@ -9784,9 +9917,9 @@ async function syncMailboxDispatchDelivered(teamName, workerName, messageId, cwd
     cwd
   ).catch(logDispatchSyncFailure);
 }
-function validateCommonFields(args) {
+function validateCommonFields(args, options = {}) {
   const teamName = String(args.team_name || "").trim();
-  if (teamName && !TEAM_NAME_SAFE_PATTERN.test(teamName)) {
+  if (!options.skipTeamName && teamName && !TEAM_NAME_SAFE_PATTERN.test(teamName)) {
     throw new Error(`Invalid team_name: "${teamName}". Must match /^[a-z0-9][a-z0-9-]{0,29}$/ (lowercase alphanumeric + hyphens, max 30 chars).`);
   }
   for (const workerField of ["worker", "from_worker", "to_worker"]) {
@@ -9802,15 +9935,18 @@ function validateCommonFields(args) {
 }
 async function executeTeamApiOperation(operation, args, fallbackCwd) {
   try {
-    validateCommonFields(args);
-    const teamNameForCwd = String(args.team_name || "").trim();
-    const cwd = teamNameForCwd ? resolveTeamWorkingDirectory(teamNameForCwd, fallbackCwd) : fallbackCwd;
+    validateCommonFields(args, { skipTeamName: true });
+    const rawTeamNameForCwd = String(args.team_name || "").trim();
+    const resolvedTeamName = rawTeamNameForCwd ? resolveTeamNameForCurrentContext(rawTeamNameForCwd, fallbackCwd) : "";
+    const cwd = resolvedTeamName ? resolveTeamWorkingDirectory(resolvedTeamName, fallbackCwd) : fallbackCwd;
+    const opArgs = resolvedTeamName ? { ...args, team_name: resolvedTeamName } : args;
+    validateCommonFields(opArgs);
     switch (operation) {
       case "send-message": {
-        const teamName = String(args.team_name || "").trim();
-        const fromWorker = String(args.from_worker || "").trim();
-        const toWorker = String(args.to_worker || "").trim();
-        const body = String(args.body || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const fromWorker = String(opArgs.from_worker || "").trim();
+        const toWorker = String(opArgs.to_worker || "").trim();
+        const body = String(opArgs.body || "").trim();
         if (!fromWorker) {
           return { ok: false, operation, error: { code: "invalid_input", message: "from_worker is required. You must identify yourself." } };
         }
@@ -9830,22 +9966,22 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
           cwd,
           notify: ({ workerName }, triggerMessage) => notifyMailboxTarget(teamName, workerName, triggerMessage, cwd),
           deps: {
-            sendDirectMessage: async (resolvedTeamName, resolvedFromWorker, resolvedToWorker, resolvedBody, resolvedCwd) => {
-              message = await teamSendMessage(resolvedTeamName, resolvedFromWorker, resolvedToWorker, resolvedBody, resolvedCwd);
+            sendDirectMessage: async (resolvedTeamName2, resolvedFromWorker, resolvedToWorker, resolvedBody, resolvedCwd) => {
+              message = await teamSendMessage(resolvedTeamName2, resolvedFromWorker, resolvedToWorker, resolvedBody, resolvedCwd);
               return message;
             },
             broadcastMessage: teamBroadcast,
-            markMessageNotified: async (resolvedTeamName, workerName, messageId, resolvedCwd) => {
-              await teamMarkMessageNotified(resolvedTeamName, workerName, messageId, resolvedCwd);
+            markMessageNotified: async (resolvedTeamName2, workerName, messageId, resolvedCwd) => {
+              await teamMarkMessageNotified(resolvedTeamName2, workerName, messageId, resolvedCwd);
             }
           }
         });
         return { ok: true, operation, data: { message } };
       }
       case "broadcast": {
-        const teamName = String(args.team_name || "").trim();
-        const fromWorker = String(args.from_worker || "").trim();
-        const body = String(args.body || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const fromWorker = String(opArgs.from_worker || "").trim();
+        const body = String(opArgs.body || "").trim();
         if (!teamName || !fromWorker || !body) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, from_worker, body are required" } };
         }
@@ -9872,20 +10008,20 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
           notify: ({ workerName }, triggerMessage) => notifyMailboxTarget(teamName, workerName, triggerMessage, cwd),
           deps: {
             sendDirectMessage: teamSendMessage,
-            broadcastMessage: async (resolvedTeamName, resolvedFromWorker, resolvedBody, resolvedCwd) => {
-              messages = await teamBroadcast(resolvedTeamName, resolvedFromWorker, resolvedBody, resolvedCwd);
+            broadcastMessage: async (resolvedTeamName2, resolvedFromWorker, resolvedBody, resolvedCwd) => {
+              messages = await teamBroadcast(resolvedTeamName2, resolvedFromWorker, resolvedBody, resolvedCwd);
               return messages;
             },
-            markMessageNotified: async (resolvedTeamName, workerName, messageId, resolvedCwd) => {
-              await teamMarkMessageNotified(resolvedTeamName, workerName, messageId, resolvedCwd);
+            markMessageNotified: async (resolvedTeamName2, workerName, messageId, resolvedCwd) => {
+              await teamMarkMessageNotified(resolvedTeamName2, workerName, messageId, resolvedCwd);
             }
           }
         });
         return { ok: true, operation, data: { count: messages.length, messages } };
       }
       case "mailbox-list": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         const includeDelivered = args.include_delivered !== false;
         if (!teamName || !worker) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name and worker are required" } };
@@ -9895,9 +10031,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { worker, count: messages.length, messages } };
       }
       case "mailbox-mark-delivered": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
-        const messageId = String(args.message_id || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
+        const messageId = String(opArgs.message_id || "").trim();
         if (!teamName || !worker || !messageId) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, worker, message_id are required" } };
         }
@@ -9908,9 +10044,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { worker, message_id: messageId, updated } };
       }
       case "mailbox-mark-notified": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
-        const messageId = String(args.message_id || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
+        const messageId = String(opArgs.message_id || "").trim();
         if (!teamName || !worker || !messageId) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, worker, message_id are required" } };
         }
@@ -9921,9 +10057,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { worker, message_id: messageId, notified } };
       }
       case "create-task": {
-        const teamName = String(args.team_name || "").trim();
-        const subject = String(args.subject || "").trim();
-        const description = String(args.description || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const subject = String(opArgs.subject || "").trim();
+        const description = String(opArgs.description || "").trim();
         if (!teamName || !subject || !description) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, subject, description are required" } };
         }
@@ -9950,8 +10086,8 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { task } };
       }
       case "read-task": {
-        const teamName = String(args.team_name || "").trim();
-        const taskId = String(args.task_id || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const taskId = String(opArgs.task_id || "").trim();
         if (!teamName || !taskId) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name and task_id are required" } };
         }
@@ -9959,7 +10095,7 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return task ? { ok: true, operation, data: { task } } : { ok: false, operation, error: { code: "task_not_found", message: "task_not_found" } };
       }
       case "list-tasks": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         }
@@ -9967,8 +10103,8 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { count: tasks.length, tasks } };
       }
       case "update-task": {
-        const teamName = String(args.team_name || "").trim();
-        const taskId = String(args.task_id || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const taskId = String(opArgs.task_id || "").trim();
         if (!teamName || !taskId) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name and task_id are required" } };
         }
@@ -10018,9 +10154,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return task ? { ok: true, operation, data: { task } } : { ok: false, operation, error: { code: "task_not_found", message: "task_not_found" } };
       }
       case "claim-task": {
-        const teamName = String(args.team_name || "").trim();
-        const taskId = String(args.task_id || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const taskId = String(opArgs.task_id || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         if (!teamName || !taskId || !worker) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, task_id, worker are required" } };
         }
@@ -10032,11 +10168,11 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: result };
       }
       case "transition-task-status": {
-        const teamName = String(args.team_name || "").trim();
-        const taskId = String(args.task_id || "").trim();
-        const from = String(args.from || "").trim();
-        const to = String(args.to || "").trim();
-        const claimToken = String(args.claim_token || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const taskId = String(opArgs.task_id || "").trim();
+        const from = String(opArgs.from || "").trim();
+        const to = String(opArgs.to || "").trim();
+        const claimToken = String(opArgs.claim_token || "").trim();
         const transitionResult = args.result;
         const transitionError = args.error;
         if (!teamName || !taskId || !from || !to || !claimToken) {
@@ -10067,10 +10203,10 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: result };
       }
       case "release-task-claim": {
-        const teamName = String(args.team_name || "").trim();
-        const taskId = String(args.task_id || "").trim();
-        const claimToken = String(args.claim_token || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const taskId = String(opArgs.task_id || "").trim();
+        const claimToken = String(opArgs.claim_token || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         if (!teamName || !taskId || !claimToken || !worker) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, task_id, claim_token, worker are required" } };
         }
@@ -10078,34 +10214,34 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: result };
       }
       case "read-config": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const config = await teamReadConfig(teamName, cwd);
         return config ? { ok: true, operation, data: { config } } : { ok: false, operation, error: { code: "team_not_found", message: "team_not_found" } };
       }
       case "read-manifest": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const manifest = await teamReadManifest(teamName, cwd);
         return manifest ? { ok: true, operation, data: { manifest } } : { ok: false, operation, error: { code: "manifest_not_found", message: "manifest_not_found" } };
       }
       case "read-worker-status": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         if (!teamName || !worker) return { ok: false, operation, error: { code: "invalid_input", message: "team_name and worker are required" } };
         const status = await teamReadWorkerStatus(teamName, worker, cwd);
         return { ok: true, operation, data: { worker, status } };
       }
       case "read-worker-heartbeat": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         if (!teamName || !worker) return { ok: false, operation, error: { code: "invalid_input", message: "team_name and worker are required" } };
         const heartbeat = await teamReadWorkerHeartbeat(teamName, worker, cwd);
         return { ok: true, operation, data: { worker, heartbeat } };
       }
       case "update-worker-heartbeat": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         const pid = args.pid;
         const turnCount = args.turn_count;
         const alive = args.alive;
@@ -10116,9 +10252,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { worker } };
       }
       case "write-worker-inbox": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
-        const content = String(args.content || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
+        const content = String(opArgs.content || "").trim();
         if (!teamName || !worker || !content) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, worker, content are required" } };
         }
@@ -10126,10 +10262,10 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { worker } };
       }
       case "write-worker-identity": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         const index = args.index;
-        const role = String(args.role || "").trim();
+        const role = String(opArgs.role || "").trim();
         if (!teamName || !worker || typeof index !== "number" || !role) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, worker, index, role are required" } };
         }
@@ -10151,9 +10287,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { worker } };
       }
       case "append-event": {
-        const teamName = String(args.team_name || "").trim();
-        const eventType = String(args.type || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const eventType = String(opArgs.type || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         if (!teamName || !eventType || !worker) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, type, worker are required" } };
         }
@@ -10170,7 +10306,7 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { event } };
       }
       case "read-events": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const wakeableOnly = parseOptionalBoolean(args.wakeable_only, "wakeable_only");
         const eventType = parseOptionalEventType(args.type);
@@ -10187,7 +10323,7 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { count: events.length, cursor: events.at(-1)?.event_id ?? afterEventId, events } };
       }
       case "await-event": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const timeoutMs = parseOptionalNonNegativeInteger(args.timeout_ms, "timeout_ms") ?? 3e4;
         const pollMs = parseOptionalNonNegativeInteger(args.poll_ms, "poll_ms");
@@ -10207,7 +10343,7 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { status: result.status, cursor: result.cursor, event: result.event ?? null } };
       }
       case "read-idle-state": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const [summary, snapshot, events] = await Promise.all([
           teamGetSummary(teamName, cwd),
@@ -10219,7 +10355,7 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: buildIdleState(teamName, summary, snapshot, recentEvents) };
       }
       case "read-stall-state": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const [summary, snapshot, events, pendingLeaderDispatch] = await Promise.all([
           teamGetSummary(teamName, cwd),
@@ -10232,19 +10368,19 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: buildStallState(teamName, summary, snapshot, recentEvents, pendingLeaderDispatch.length) };
       }
       case "get-summary": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const summary = await teamGetSummary(teamName, cwd);
         return summary ? { ok: true, operation, data: { summary } } : { ok: false, operation, error: { code: "team_not_found", message: "team_not_found" } };
       }
       case "cleanup": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         await executeTeamCleanupViaRuntime(teamName, cwd);
         return { ok: true, operation, data: { team_name: teamName } };
       }
       case "orphan-cleanup": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const safety = inspectTeamWorktreeCleanupSafety(teamName, cwd);
         if (safety.hasEvidence && args.acknowledge_lost_worktree_recovery !== true) {
@@ -10261,9 +10397,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { team_name: teamName } };
       }
       case "write-shutdown-request": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
-        const requestedBy = String(args.requested_by || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
+        const requestedBy = String(opArgs.requested_by || "").trim();
         if (!teamName || !worker || !requestedBy) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, worker, requested_by are required" } };
         }
@@ -10271,23 +10407,23 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { worker } };
       }
       case "read-shutdown-ack": {
-        const teamName = String(args.team_name || "").trim();
-        const worker = String(args.worker || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const worker = String(opArgs.worker || "").trim();
         if (!teamName || !worker) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name and worker are required" } };
         }
-        const ack = await teamReadShutdownAck(teamName, worker, cwd, args.min_updated_at);
+        const ack = await teamReadShutdownAck(teamName, worker, cwd, opArgs.min_updated_at);
         return { ok: true, operation, data: { worker, ack } };
       }
       case "read-monitor-snapshot": {
-        const teamName = String(args.team_name || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
         if (!teamName) return { ok: false, operation, error: { code: "invalid_input", message: "team_name is required" } };
         const snapshot = await teamReadMonitorSnapshot(teamName, cwd);
         return { ok: true, operation, data: { snapshot } };
       }
       case "write-monitor-snapshot": {
-        const teamName = String(args.team_name || "").trim();
-        const snapshot = args.snapshot;
+        const teamName = String(opArgs.team_name || "").trim();
+        const snapshot = opArgs.snapshot;
         if (!teamName || !snapshot) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name and snapshot are required" } };
         }
@@ -10295,8 +10431,8 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: {} };
       }
       case "read-task-approval": {
-        const teamName = String(args.team_name || "").trim();
-        const taskId = String(args.task_id || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const taskId = String(opArgs.task_id || "").trim();
         if (!teamName || !taskId) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name and task_id are required" } };
         }
@@ -10304,11 +10440,11 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
         return { ok: true, operation, data: { approval } };
       }
       case "write-task-approval": {
-        const teamName = String(args.team_name || "").trim();
-        const taskId = String(args.task_id || "").trim();
-        const status = String(args.status || "").trim();
-        const reviewer = String(args.reviewer || "").trim();
-        const decisionReason = String(args.decision_reason || "").trim();
+        const teamName = String(opArgs.team_name || "").trim();
+        const taskId = String(opArgs.task_id || "").trim();
+        const status = String(opArgs.status || "").trim();
+        const reviewer = String(opArgs.reviewer || "").trim();
+        const decisionReason = String(opArgs.decision_reason || "").trim();
         if (!teamName || !taskId || !status || !reviewer || !decisionReason) {
           return { ok: false, operation, error: { code: "invalid_input", message: "team_name, task_id, status, reviewer, decision_reason are required" } };
         }
@@ -10331,6 +10467,9 @@ async function executeTeamApiOperation(operation, args, fallbackCwd) {
       }
     }
   } catch (error) {
+    if (error instanceof TeamLookupAmbiguityError) {
+      return { ok: false, operation, error: { code: "ambiguous_team_name", message: error.message, details: { candidates: error.candidates } } };
+    }
     return {
       ok: false,
       operation,
@@ -10351,8 +10490,8 @@ init_platform();
 init_paths();
 
 // src/planning/artifacts.ts
-import { readdirSync as readdirSync5, readFileSync as readFileSync10, existsSync as existsSync20 } from "fs";
-import { join as join23 } from "path";
+import { readdirSync as readdirSync6, readFileSync as readFileSync11, existsSync as existsSync21 } from "fs";
+import { join as join24 } from "path";
 
 // src/planning/artifact-names.ts
 import { basename as basename7 } from "path";
@@ -10452,7 +10591,7 @@ function selectLatestPlanningArtifactPath(paths) {
 // src/planning/artifacts.ts
 function readFileSafe(path4) {
   try {
-    return readFileSync10(path4, "utf-8");
+    return readFileSync11(path4, "utf-8");
   } catch {
     return null;
   }
@@ -10479,7 +10618,7 @@ function hasRequiredSections(markdown, headings) {
   );
 }
 function getPlansDirCandidates(cwd) {
-  return [join23(cwd, ".omc", "plans"), join23(cwd, ".omx", "plans")];
+  return [join24(cwd, ".omc", "plans"), join24(cwd, ".omx", "plans")];
 }
 function sortArtifactPathsDescending(paths) {
   return [...paths].sort((a, b) => comparePlanningArtifactPaths(b, a));
@@ -10506,19 +10645,19 @@ function readPlanningArtifacts(cwd) {
   const prdPaths = [];
   const testSpecPaths = [];
   for (const plansDir of getPlansDirCandidates(cwd)) {
-    if (!existsSync20(plansDir)) {
+    if (!existsSync21(plansDir)) {
       continue;
     }
     try {
-      entries = readdirSync5(plansDir);
+      entries = readdirSync6(plansDir);
     } catch {
       continue;
     }
     for (const entry of entries) {
       if (entry.startsWith("prd-") && entry.endsWith(".md")) {
-        prdPaths.push(join23(plansDir, entry));
+        prdPaths.push(join24(plansDir, entry));
       } else if (entry.startsWith("test-spec-") && entry.endsWith(".md")) {
-        testSpecPaths.push(join23(plansDir, entry));
+        testSpecPaths.push(join24(plansDir, entry));
       }
     }
   }
@@ -10678,24 +10817,24 @@ function resolveRuntimeCliPath(env = process.env) {
     return env.OMC_RUNTIME_CLI_PATH;
   }
   const moduleDir = dirname16(fileURLToPath3(import.meta.url));
-  return join24(moduleDir, "../../bridge/runtime-cli.cjs");
+  return join25(moduleDir, "../../bridge/runtime-cli.cjs");
 }
 function ensureJobsDir(jobsDir) {
-  if (!existsSync21(jobsDir)) {
+  if (!existsSync22(jobsDir)) {
     mkdirSync3(jobsDir, { recursive: true });
   }
 }
 function jobPath(jobsDir, jobId) {
-  return join24(jobsDir, `${jobId}.json`);
+  return join25(jobsDir, `${jobId}.json`);
 }
 function resultArtifactPath(jobsDir, jobId) {
-  return join24(jobsDir, `${jobId}-result.json`);
+  return join25(jobsDir, `${jobId}-result.json`);
 }
 function panesArtifactPath(jobsDir, jobId) {
-  return join24(jobsDir, `${jobId}-panes.json`);
+  return join25(jobsDir, `${jobId}-panes.json`);
 }
 function teamStateRoot2(cwd, teamName) {
-  return join24(cwd, ".omc", "state", "team", teamName);
+  return join25(cwd, ".omc", "state", "team", teamName);
 }
 function validateJobId(jobId) {
   if (!JOB_ID_PATTERN.test(jobId)) {
@@ -10735,7 +10874,7 @@ async function resolveCleanupPaneEvidence(job, jobsDir, jobId) {
 }
 function readJobFromDisk(jobId, jobsDir) {
   try {
-    const content = readFileSync11(jobPath(jobsDir, jobId), "utf-8");
+    const content = readFileSync12(jobPath(jobsDir, jobId), "utf-8");
     return parseJsonSafe(content);
   } catch {
     return null;
@@ -10760,11 +10899,11 @@ function buildStatus(jobId, job) {
   };
 }
 function generateJobId(now = Date.now()) {
-  return `omc-${now.toString(36)}${randomUUID6().slice(0, 8)}`;
+  return `omc-${now.toString(36)}${randomUUID7().slice(0, 8)}`;
 }
 function convergeWithResultArtifact(jobId, job, jobsDir) {
   try {
-    const artifactRaw = readFileSync11(resultArtifactPath(jobsDir, jobId), "utf-8");
+    const artifactRaw = readFileSync12(resultArtifactPath(jobsDir, jobId), "utf-8");
     const artifactParsed = parseJsonSafe(artifactRaw);
     if (artifactParsed?.status === "completed" || artifactParsed?.status === "failed") {
       return {
@@ -10896,7 +11035,7 @@ async function waitForTeamJob(jobId, options = {}) {
     if (status2.status !== "running") {
       return status2;
     }
-    await new Promise((resolve5) => setTimeout(resolve5, delayMs));
+    await new Promise((resolve6) => setTimeout(resolve6, delayMs));
     delayMs = Math.min(Math.floor(delayMs * 1.5), 2e3);
   }
   const status = await getTeamJobStatus(jobId);
