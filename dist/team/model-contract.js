@@ -1,9 +1,9 @@
-import { spawnSync } from "child_process";
-import { isAbsolute, normalize, win32 as win32Path } from "path";
-import { validateTeamName } from "./team-name.js";
-import { normalizeToCcAlias } from "../features/delegation-enforcer.js";
-import { getDefaultModelHigh, getDefaultModelLow, getDefaultModelMedium, isBedrock, isVertexAI, isProviderSpecificModelId, } from "../config/models.js";
-import { isExternalLLMDisabled } from "../lib/security-config.js";
+import { spawnSync } from 'child_process';
+import { isAbsolute, normalize, win32 as win32Path } from 'path';
+import { validateTeamName } from './team-name.js';
+import { normalizeToCcAlias } from '../features/delegation-enforcer.js';
+import { getDefaultModelHigh, getDefaultModelLow, getDefaultModelMedium, isBedrock, isVertexAI, isProviderSpecificModelId } from '../config/models.js';
+import { isExternalLLMDisabled } from '../lib/security-config.js';
 const resolvedPathCache = new Map();
 const UNTRUSTED_PATH_PATTERNS = [
     /^\/tmp(\/|$)/,
@@ -11,24 +11,28 @@ const UNTRUSTED_PATH_PATTERNS = [
     /^\/dev\/shm(\/|$)/,
 ];
 function getTrustedPrefixes() {
-    const trusted = ["/usr/local/bin", "/usr/bin", "/opt/homebrew/"];
+    const trusted = [
+        '/usr/local/bin',
+        '/usr/bin',
+        '/opt/homebrew/',
+    ];
     const home = process.env.HOME;
     if (home) {
         trusted.push(`${home}/.local/bin`);
         trusted.push(`${home}/.nvm/`);
         trusted.push(`${home}/.cargo/bin`);
     }
-    const custom = (process.env.OMC_TRUSTED_CLI_DIRS ?? "")
-        .split(":")
-        .map((part) => part.trim())
+    const custom = (process.env.OMC_TRUSTED_CLI_DIRS ?? '')
+        .split(':')
+        .map(part => part.trim())
         .filter(Boolean)
-        .filter((part) => isAbsolute(part));
+        .filter(part => isAbsolute(part));
     trusted.push(...custom);
     return trusted;
 }
 function isTrustedPrefix(resolvedPath) {
     const normalized = normalize(resolvedPath);
-    return getTrustedPrefixes().some((prefix) => normalized.startsWith(normalize(prefix)));
+    return getTrustedPrefixes().some(prefix => normalized.startsWith(normalize(prefix)));
 }
 function assertBinaryName(binary) {
     if (!/^[A-Za-z0-9._-]+$/.test(binary)) {
@@ -45,7 +49,7 @@ export function resolveCliBinaryPath(binary) {
     const cached = resolvedPathCache.get(binary);
     if (cached)
         return cached;
-    const finder = process.platform === "win32" ? "where" : "which";
+    const finder = process.platform === 'win32' ? 'where' : 'which';
     const result = spawnSync(finder, [binary], {
         timeout: 5000,
         env: process.env,
@@ -53,11 +57,8 @@ export function resolveCliBinaryPath(binary) {
     if (result.status !== 0) {
         throw new Error(`CLI binary '${binary}' not found in PATH`);
     }
-    const stdout = result.stdout?.toString().trim() ?? "";
-    const firstLine = stdout
-        .split("\n")
-        .map((line) => line.trim())
-        .find(Boolean) ?? "";
+    const stdout = result.stdout?.toString().trim() ?? '';
+    const firstLine = stdout.split('\n').map(line => line.trim()).find(Boolean) ?? '';
     if (!firstLine) {
         throw new Error(`CLI binary '${binary}' not found in PATH`);
     }
@@ -65,7 +66,7 @@ export function resolveCliBinaryPath(binary) {
     if (!isAbsolute(resolvedPath)) {
         throw new Error(`Resolved CLI binary '${binary}' to relative path`);
     }
-    if (UNTRUSTED_PATH_PATTERNS.some((pattern) => pattern.test(resolvedPath))) {
+    if (UNTRUSTED_PATH_PATTERNS.some(pattern => pattern.test(resolvedPath))) {
         throw new Error(`Resolved CLI binary '${binary}' to untrusted location: ${resolvedPath}`);
     }
     if (!isTrustedPrefix(resolvedPath)) {
@@ -96,45 +97,45 @@ export const _testInternals = {
     UNTRUSTED_PATH_PATTERNS,
     getTrustedPrefixes,
 };
-const MADMAX_FLAG = "--madmax";
-const CODEX_BYPASS_FLAG = "--dangerously-bypass-approvals-and-sandbox";
-const MODEL_FLAG = "--model";
-const CONFIG_FLAG = "-c";
-const REASONING_KEY = "model_reasoning_effort";
-const MODEL_PROVIDER_KEY = "model_provider";
-const LOW_COMPLEXITY_AGENT_TYPES = new Set(["explore", "style-reviewer"]);
+const CODEX_BYPASS_FLAG = '--dangerously-bypass-approvals-and-sandbox';
+const MADMAX_FLAG = '--madmax';
+const MODEL_FLAG = '--model';
+const CONFIG_FLAG = '-c';
+const REASONING_KEY = 'model_reasoning_effort';
+const MODEL_PROVIDER_KEY = 'model_provider';
+const LOW_COMPLEXITY_AGENT_TYPES = new Set(['explore', 'style-reviewer']);
 const ROLE_REASONING_DEFAULTS = {
-    explore: "low",
-    writer: "low",
-    executor: "medium",
-    debugger: "medium",
-    "test-engineer": "medium",
-    verifier: "medium",
-    designer: "medium",
-    "security-reviewer": "medium",
-    architect: "high",
-    planner: "high",
-    analyst: "high",
-    critic: "high",
-    "code-reviewer": "high",
-    "code-simplifier": "high",
+    explore: 'low',
+    writer: 'low',
+    executor: 'medium',
+    debugger: 'medium',
+    'test-engineer': 'medium',
+    verifier: 'medium',
+    designer: 'medium',
+    'security-reviewer': 'medium',
+    architect: 'high',
+    planner: 'high',
+    analyst: 'high',
+    critic: 'high',
+    'code-reviewer': 'high',
+    'code-simplifier': 'high',
 };
 const ROLE_MODEL_DEFAULTS = {
     explore: getDefaultModelLow,
     writer: getDefaultModelLow,
     executor: getDefaultModelMedium,
     debugger: getDefaultModelMedium,
-    "test-engineer": getDefaultModelMedium,
+    'test-engineer': getDefaultModelMedium,
     verifier: getDefaultModelMedium,
     designer: getDefaultModelMedium,
-    "security-reviewer": getDefaultModelMedium,
-    "document-specialist": getDefaultModelMedium,
+    'security-reviewer': getDefaultModelMedium,
+    'document-specialist': getDefaultModelMedium,
     architect: getDefaultModelHigh,
     planner: getDefaultModelHigh,
     analyst: getDefaultModelHigh,
     critic: getDefaultModelHigh,
-    "code-reviewer": getDefaultModelHigh,
-    "code-simplifier": getDefaultModelHigh,
+    'code-reviewer': getDefaultModelHigh,
+    'code-simplifier': getDefaultModelHigh,
     orchestrator: getDefaultModelHigh,
 };
 function isConfigOverrideForKey(value, key) {
@@ -147,22 +148,19 @@ function isModelProviderOverride(value) {
     return isConfigOverrideForKey(value, MODEL_PROVIDER_KEY);
 }
 function isValidModelValue(value) {
-    return value.trim().length > 0 && !value.startsWith("-");
+    return value.trim().length > 0 && !value.startsWith('-');
 }
 function normalizeOptionalModel(model) {
-    if (typeof model !== "string")
+    if (typeof model !== 'string')
         return undefined;
     const trimmed = model.trim();
     return trimmed.length > 0 ? trimmed : undefined;
 }
 function normalizeOptionalReasoning(reasoning) {
-    if (typeof reasoning !== "string")
+    if (typeof reasoning !== 'string')
         return undefined;
     const normalized = reasoning.trim().toLowerCase();
-    if (normalized === "low" ||
-        normalized === "medium" ||
-        normalized === "high" ||
-        normalized === "xhigh") {
+    if (normalized === 'low' || normalized === 'medium' || normalized === 'high' || normalized === 'xhigh') {
         return normalized;
     }
     return undefined;
@@ -172,12 +170,9 @@ function normalizeRoleName(agentType) {
     return normalized ? normalized : undefined;
 }
 export function splitWorkerLaunchArgs(raw) {
-    if (!raw || raw.trim() === "")
+    if (!raw || raw.trim() === '')
         return [];
-    return raw
-        .split(/\s+/)
-        .map((part) => part.trim())
-        .filter(Boolean);
+    return raw.split(/\s+/).map((part) => part.trim()).filter(Boolean);
 }
 export function parseTeamWorkerLaunchArgs(args) {
     const passthrough = [];
@@ -193,7 +188,7 @@ export function parseTeamWorkerLaunchArgs(args) {
         }
         if (arg === MODEL_FLAG) {
             const maybeValue = args[i + 1];
-            if (typeof maybeValue === "string" && isValidModelValue(maybeValue)) {
+            if (typeof maybeValue === 'string' && isValidModelValue(maybeValue)) {
                 modelOverride = maybeValue.trim();
                 i += 1;
             }
@@ -201,20 +196,18 @@ export function parseTeamWorkerLaunchArgs(args) {
         }
         if (arg.startsWith(`${MODEL_FLAG}=`)) {
             const inlineValue = arg.slice(`${MODEL_FLAG}=`.length).trim();
-            if (isValidModelValue(inlineValue)) {
+            if (isValidModelValue(inlineValue))
                 modelOverride = inlineValue;
-            }
             continue;
         }
         if (arg === CONFIG_FLAG) {
             const maybeValue = args[i + 1];
-            if (typeof maybeValue === "string" && isReasoningOverride(maybeValue)) {
+            if (typeof maybeValue === 'string' && isReasoningOverride(maybeValue)) {
                 reasoningOverride = maybeValue;
                 i += 1;
                 continue;
             }
-            if (typeof maybeValue === "string" &&
-                isModelProviderOverride(maybeValue)) {
+            if (typeof maybeValue === 'string' && isModelProviderOverride(maybeValue)) {
                 modelProviderOverride = maybeValue;
                 i += 1;
                 continue;
@@ -222,13 +215,7 @@ export function parseTeamWorkerLaunchArgs(args) {
         }
         passthrough.push(arg);
     }
-    return {
-        passthrough,
-        wantsBypass,
-        reasoningOverride,
-        modelProviderOverride,
-        modelOverride,
-    };
+    return { passthrough, wantsBypass, reasoningOverride, modelProviderOverride, modelOverride };
 }
 export function collectInheritableTeamWorkerArgs(workerArgs) {
     const parsed = parseTeamWorkerLaunchArgs(workerArgs);
@@ -248,17 +235,14 @@ export function normalizeTeamWorkerLaunchArgs(args, preferredModel, preferredRea
     const normalized = [...parsed.passthrough];
     if (parsed.wantsBypass)
         normalized.push(CODEX_BYPASS_FLAG);
-    const reasoning = parsed.reasoningOverride ??
-        (normalizeOptionalReasoning(preferredReasoning)
-            ? `${REASONING_KEY}="${normalizeOptionalReasoning(preferredReasoning)}"`
-            : null);
-    const modelProvider = preferredModelProviderOverride ?? parsed.modelProviderOverride;
-    if (modelProvider)
-        normalized.push(CONFIG_FLAG, modelProvider);
-    if (reasoning)
-        normalized.push(CONFIG_FLAG, reasoning);
-    const selectedModel = normalizeOptionalModel(preferredModel) ??
-        normalizeOptionalModel(parsed.modelOverride);
+    const selectedReasoning = parsed.reasoningOverride
+        ?? (normalizeOptionalReasoning(preferredReasoning) ? `${REASONING_KEY}="${normalizeOptionalReasoning(preferredReasoning)}"` : null);
+    const selectedModelProvider = preferredModelProviderOverride ?? parsed.modelProviderOverride;
+    if (selectedModelProvider)
+        normalized.push(CONFIG_FLAG, selectedModelProvider);
+    if (selectedReasoning)
+        normalized.push(CONFIG_FLAG, selectedReasoning);
+    const selectedModel = normalizeOptionalModel(preferredModel) ?? normalizeOptionalModel(parsed.modelOverride);
     if (selectedModel)
         normalized.push(MODEL_FLAG, selectedModel);
     return normalized;
@@ -269,19 +253,17 @@ export function resolveTeamWorkerLaunchArgs(options) {
     const allArgs = [...envArgs, ...inheritedArgs];
     const envParsed = parseTeamWorkerLaunchArgs(envArgs);
     const inheritedParsed = parseTeamWorkerLaunchArgs(inheritedArgs);
-    const selectedModel = normalizeOptionalModel(envParsed.modelOverride) ??
-        normalizeOptionalModel(inheritedParsed.modelOverride) ??
-        normalizeOptionalModel(options.fallbackModel);
-    const selectedModelProvider = envParsed.modelProviderOverride ??
-        inheritedParsed.modelProviderOverride ??
-        undefined;
+    const selectedModel = normalizeOptionalModel(envParsed.modelOverride)
+        ?? normalizeOptionalModel(inheritedParsed.modelOverride)
+        ?? normalizeOptionalModel(options.fallbackModel);
+    const selectedModelProvider = envParsed.modelProviderOverride ?? inheritedParsed.modelProviderOverride ?? undefined;
     return normalizeTeamWorkerLaunchArgs(allArgs, selectedModel, options.preferredReasoning, selectedModelProvider);
 }
 export function isLowComplexityAgentType(agentType) {
     const normalized = normalizeRoleName(agentType);
     if (!normalized)
         return false;
-    if (normalized.endsWith("-low"))
+    if (normalized.endsWith('-low'))
         return true;
     return LOW_COMPLEXITY_AGENT_TYPES.has(normalized);
 }
@@ -295,20 +277,19 @@ export function resolveAgentDefaultModel(agentType) {
     const normalized = normalizeRoleName(agentType);
     if (!normalized)
         return undefined;
-    if (normalized.endsWith("-low"))
+    if (normalized.endsWith('-low'))
         return getDefaultModelLow();
     return ROLE_MODEL_DEFAULTS[normalized]?.();
 }
 function contractExtraFlags(agentType, extraFlags, model) {
     const parsed = parseTeamWorkerLaunchArgs(extraFlags ?? []);
-    const selectedModel = normalizeOptionalModel(parsed.modelOverride) ??
-        normalizeOptionalModel(model);
+    const selectedModel = normalizeOptionalModel(parsed.modelOverride) ?? normalizeOptionalModel(model);
     const passthrough = [...parsed.passthrough];
-    if (agentType === "codex" && parsed.modelProviderOverride)
+    if (agentType === 'codex' && parsed.modelProviderOverride)
         passthrough.push(CONFIG_FLAG, parsed.modelProviderOverride);
-    if (agentType === "codex" && parsed.reasoningOverride)
+    if (agentType === 'codex' && parsed.reasoningOverride)
         passthrough.push(CONFIG_FLAG, parsed.reasoningOverride);
-    if (parsed.wantsBypass && agentType !== "codex")
+    if (parsed.wantsBypass && agentType !== 'codex')
         passthrough.push(CODEX_BYPASS_FLAG);
     return { model: selectedModel, extraFlags: passthrough };
 }
@@ -328,28 +309,25 @@ export function resolveWorkerLaunchExtraFlags(env = process.env, inheritedArgs =
  * interactive OAuth/session login path for team worker panes.
  */
 export function shouldUseClaudeBareMode(env = process.env) {
-    return (typeof env.ANTHROPIC_API_KEY === "string" &&
-        env.ANTHROPIC_API_KEY.trim().length > 0);
+    return typeof env.ANTHROPIC_API_KEY === 'string' && env.ANTHROPIC_API_KEY.trim().length > 0;
 }
 const CONTRACTS = {
     claude: {
-        agentType: "claude",
-        binary: "claude",
-        installInstructions: "Install Claude CLI: https://claude.ai/download",
+        agentType: 'claude',
+        binary: 'claude',
+        installInstructions: 'Install Claude CLI: https://claude.ai/download',
         buildLaunchArgs(model, extraFlags = []) {
-            const args = ["--dangerously-skip-permissions"];
-            if (shouldUseClaudeBareMode() && !extraFlags.includes("--bare")) {
-                args.push("--bare");
+            const args = ['--dangerously-skip-permissions'];
+            if (shouldUseClaudeBareMode() && !extraFlags.includes('--bare')) {
+                args.push('--bare');
             }
             if (model) {
                 // Provider-specific model IDs (Bedrock, Vertex) must be passed as-is.
                 // Normalizing them to aliases like "sonnet" causes Claude Code to expand
                 // them to Anthropic API names (claude-sonnet-4-6) which are invalid on
                 // these providers. (issue #1695)
-                const resolved = isProviderSpecificModelId(model)
-                    ? model
-                    : normalizeToCcAlias(model);
-                args.push("--model", resolved);
+                const resolved = isProviderSpecificModelId(model) ? model : normalizeToCcAlias(model);
+                args.push('--model', resolved);
             }
             return [...args, ...extraFlags];
         },
@@ -358,29 +336,29 @@ const CONTRACTS = {
         },
     },
     codex: {
-        agentType: "codex",
-        binary: "codex",
-        installInstructions: "Install Codex CLI: npm install -g @openai/codex",
+        agentType: 'codex',
+        binary: 'codex',
+        installInstructions: 'Install Codex CLI: npm install -g @openai/codex',
         // Team workers must be persistent interactive panes. Do not use `codex exec`
         // or positional prompt mode here; runtime dispatch writes inbox.md and nudges
         // the live Codex TUI with `codex` as the worker process.
         supportsPromptMode: false,
         buildLaunchArgs(model, extraFlags = []) {
-            const args = ["--dangerously-bypass-approvals-and-sandbox"];
+            const args = ['--dangerously-bypass-approvals-and-sandbox'];
             if (model)
-                args.push("--model", model);
+                args.push('--model', model);
             return [...args, ...extraFlags];
         },
         parseOutput(rawOutput) {
             // Codex outputs JSONL — extract the last assistant message
-            const lines = rawOutput.trim().split("\n").filter(Boolean);
+            const lines = rawOutput.trim().split('\n').filter(Boolean);
             for (let i = lines.length - 1; i >= 0; i--) {
                 try {
                     const parsed = JSON.parse(lines[i]);
-                    if (parsed.type === "message" && parsed.role === "assistant") {
+                    if (parsed.type === 'message' && parsed.role === 'assistant') {
                         return parsed.content ?? rawOutput;
                     }
-                    if (parsed.type === "result" || parsed.output) {
+                    if (parsed.type === 'result' || parsed.output) {
                         return parsed.output ?? parsed.result ?? rawOutput;
                     }
                 }
@@ -392,15 +370,15 @@ const CONTRACTS = {
         },
     },
     gemini: {
-        agentType: "gemini",
-        binary: "gemini",
-        installInstructions: "Install Gemini CLI: npm install -g @google/gemini-cli",
+        agentType: 'gemini',
+        binary: 'gemini',
+        installInstructions: 'Install Gemini CLI: npm install -g @google/gemini-cli',
         supportsPromptMode: true,
-        promptModeFlag: "-p",
+        promptModeFlag: '-p',
         buildLaunchArgs(model, extraFlags = []) {
-            const args = ["--approval-mode", "yolo"];
+            const args = ['--approval-mode', 'yolo'];
             if (model)
-                args.push("--model", model);
+                args.push('--model', model);
             return [...args, ...extraFlags];
         },
         parseOutput(rawOutput) {
@@ -408,9 +386,9 @@ const CONTRACTS = {
         },
     },
     cursor: {
-        agentType: "cursor",
-        binary: "cursor-agent",
-        installInstructions: "Install Cursor Agent CLI: see https://docs.cursor.com/cli",
+        agentType: 'cursor',
+        binary: 'cursor-agent',
+        installInstructions: 'Install Cursor Agent CLI: see https://docs.cursor.com/cli',
         // cursor-agent runs as an interactive REPL — no exit-on-complete prompt mode.
         // Keep supportsPromptMode false so the verdict-file contract path
         // (CONTRACT_ROLES + shouldInjectContract) skips this provider; cursor
@@ -429,9 +407,9 @@ const CONTRACTS = {
 export function getContract(agentType) {
     const contract = CONTRACTS[agentType];
     if (!contract) {
-        throw new Error(`Unknown agent type: ${agentType}. Supported: ${Object.keys(CONTRACTS).join(", ")}`);
+        throw new Error(`Unknown agent type: ${agentType}. Supported: ${Object.keys(CONTRACTS).join(', ')}`);
     }
-    if (agentType !== "claude" && isExternalLLMDisabled()) {
+    if (agentType !== 'claude' && isExternalLLMDisabled()) {
         throw new Error(`External LLM provider "${agentType}" is blocked by security policy (disableExternalLLM). ` +
             `Only Claude workers are allowed in the current security configuration.`);
     }
@@ -449,11 +427,8 @@ function resolveBinaryPath(binary) {
     if (isAbsolute(binary))
         return binary;
     try {
-        const resolver = process.platform === "win32" ? "where" : "which";
-        const result = spawnSync(resolver, [binary], {
-            timeout: 5000,
-            encoding: "utf8",
-        });
+        const resolver = process.platform === 'win32' ? 'where' : 'which';
+        const result = spawnSync(resolver, [binary], { timeout: 5000, encoding: 'utf8' });
         if (result.status !== 0)
             return binary;
         const lines = result.stdout
@@ -472,14 +447,14 @@ export function isCliAvailable(agentType) {
     const contract = getContract(agentType);
     try {
         const resolvedBinary = resolveBinaryPath(contract.binary);
-        if (process.platform === "win32" && /\.(cmd|bat)$/i.test(resolvedBinary)) {
-            const comspec = process.env.COMSPEC || "cmd.exe";
-            const result = spawnSync(comspec, ["/d", "/s", "/c", `"${resolvedBinary}" --version`], { timeout: 5000 });
+        if (process.platform === 'win32' && /\.(cmd|bat)$/i.test(resolvedBinary)) {
+            const comspec = process.env.COMSPEC || 'cmd.exe';
+            const result = spawnSync(comspec, ['/d', '/s', '/c', `"${resolvedBinary}" --version`], { timeout: 5000 });
             return result.status === 0;
         }
-        const result = spawnSync(resolvedBinary, ["--version"], {
+        const result = spawnSync(resolvedBinary, ['--version'], {
             timeout: 5000,
-            shell: process.platform === "win32",
+            shell: process.platform === 'win32',
         });
         return result.status === 0;
     }
@@ -516,27 +491,27 @@ export function buildWorkerArgv(agentType, config) {
 export function buildWorkerCommand(agentType, config) {
     return buildWorkerArgv(agentType, config)
         .map((part) => `'${part.replace(/'/g, `'\"'\"'`)}'`)
-        .join(" ");
+        .join(' ');
 }
 const WORKER_MODEL_ENV_ALLOWLIST = [
-    "ANTHROPIC_MODEL",
-    "CLAUDE_MODEL",
-    "ANTHROPIC_BASE_URL",
-    "CLAUDE_CODE_USE_BEDROCK",
-    "CLAUDE_CODE_USE_VERTEX",
-    "CLAUDE_CODE_BEDROCK_OPUS_MODEL",
-    "CLAUDE_CODE_BEDROCK_SONNET_MODEL",
-    "CLAUDE_CODE_BEDROCK_HAIKU_MODEL",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-    "OMC_MODEL_HIGH",
-    "OMC_MODEL_MEDIUM",
-    "OMC_MODEL_LOW",
-    "OMC_EXTERNAL_MODELS_DEFAULT_CODEX_MODEL",
-    "OMC_CODEX_DEFAULT_MODEL",
-    "OMC_EXTERNAL_MODELS_DEFAULT_GEMINI_MODEL",
-    "OMC_GEMINI_DEFAULT_MODEL",
+    'ANTHROPIC_MODEL',
+    'CLAUDE_MODEL',
+    'ANTHROPIC_BASE_URL',
+    'CLAUDE_CODE_USE_BEDROCK',
+    'CLAUDE_CODE_USE_VERTEX',
+    'CLAUDE_CODE_BEDROCK_OPUS_MODEL',
+    'CLAUDE_CODE_BEDROCK_SONNET_MODEL',
+    'CLAUDE_CODE_BEDROCK_HAIKU_MODEL',
+    'ANTHROPIC_DEFAULT_OPUS_MODEL',
+    'ANTHROPIC_DEFAULT_SONNET_MODEL',
+    'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+    'OMC_MODEL_HIGH',
+    'OMC_MODEL_MEDIUM',
+    'OMC_MODEL_LOW',
+    'OMC_EXTERNAL_MODELS_DEFAULT_CODEX_MODEL',
+    'OMC_CODEX_DEFAULT_MODEL',
+    'OMC_EXTERNAL_MODELS_DEFAULT_GEMINI_MODEL',
+    'OMC_GEMINI_DEFAULT_MODEL',
 ];
 export function getWorkerEnv(teamName, workerName, agentType, env = process.env) {
     validateTeamName(teamName);
@@ -547,7 +522,7 @@ export function getWorkerEnv(teamName, workerName, agentType, env = process.env)
     };
     for (const key of WORKER_MODEL_ENV_ALLOWLIST) {
         const value = env[key];
-        if (typeof value === "string" && value.length > 0) {
+        if (typeof value === 'string' && value.length > 0) {
             workerEnv[key] = value;
         }
     }
@@ -582,7 +557,7 @@ export function isPromptModeAgent(agentType) {
 export function resolveClaudeWorkerModel(env = process.env) {
     // When force-inherit routing is enabled, do not resolve/override worker model.
     // This preserves parent model inheritance and avoids alias normalization drift.
-    if (env.OMC_ROUTING_FORCE_INHERIT === "true") {
+    if (env.OMC_ROUTING_FORCE_INHERIT === 'true') {
         return undefined;
     }
     // Only needed for non-standard providers
@@ -590,19 +565,19 @@ export function resolveClaudeWorkerModel(env = process.env) {
         return undefined;
     }
     // Direct model env vars — highest priority
-    const directModel = env.ANTHROPIC_MODEL || env.CLAUDE_MODEL || "";
+    const directModel = env.ANTHROPIC_MODEL || env.CLAUDE_MODEL || '';
     if (directModel) {
         return directModel;
     }
     // Fallback: Bedrock tier-specific env vars (default to sonnet tier)
     const bedrockModel = env.CLAUDE_CODE_BEDROCK_SONNET_MODEL ||
         env.ANTHROPIC_DEFAULT_SONNET_MODEL ||
-        "";
+        '';
     if (bedrockModel) {
         return bedrockModel;
     }
     // OMC tier env vars
-    const omcModel = env.OMC_MODEL_MEDIUM || "";
+    const omcModel = env.OMC_MODEL_MEDIUM || '';
     if (omcModel) {
         return omcModel;
     }

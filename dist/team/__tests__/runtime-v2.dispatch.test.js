@@ -37,6 +37,8 @@ const modelContractMocks = vi.hoisted(() => ({
     getWorkerEnv: vi.fn(() => ({ OMC_TEAM_WORKER: 'dispatch-team/worker-1' })),
     isPromptModeAgent: vi.fn(() => false),
     getPromptModeArgs: vi.fn((_agentType, instruction) => [instruction]),
+    resolveAgentReasoningEffort: vi.fn(() => undefined),
+    resolveWorkerLaunchExtraFlags: vi.fn(() => []),
 }));
 vi.mock('child_process', async (importOriginal) => {
     const actual = await importOriginal();
@@ -59,7 +61,9 @@ vi.mock('../model-contract.js', () => ({
     getWorkerEnv: modelContractMocks.getWorkerEnv,
     isPromptModeAgent: modelContractMocks.isPromptModeAgent,
     getPromptModeArgs: modelContractMocks.getPromptModeArgs,
+    resolveAgentReasoningEffort: modelContractMocks.resolveAgentReasoningEffort,
     resolveClaudeWorkerModel: vi.fn(() => undefined),
+    resolveWorkerLaunchExtraFlags: modelContractMocks.resolveWorkerLaunchExtraFlags,
 }));
 vi.mock('../tmux-session.js', async (importOriginal) => {
     const actual = await importOriginal();
@@ -110,6 +114,8 @@ describe('runtime v2 startup inbox dispatch', () => {
         modelContractMocks.getWorkerEnv.mockReset();
         modelContractMocks.isPromptModeAgent.mockReset();
         modelContractMocks.getPromptModeArgs.mockReset();
+        modelContractMocks.resolveAgentReasoningEffort.mockReset();
+        modelContractMocks.resolveWorkerLaunchExtraFlags.mockReset();
         mergeMocks.startMergeOrchestrator.mockReset();
         mergeMocks.recoverFromRestart.mockReset();
         mergeMocks.registerWorker.mockReset();
@@ -136,6 +142,8 @@ describe('runtime v2 startup inbox dispatch', () => {
             const workerName = typeof args[1] === 'string' ? args[1] : 'worker-1';
             return { OMC_TEAM_WORKER: `${teamName}/${workerName}` };
         });
+        modelContractMocks.resolveAgentReasoningEffort.mockReturnValue(undefined);
+        modelContractMocks.resolveWorkerLaunchExtraFlags.mockReturnValue([]);
         modelContractMocks.isPromptModeAgent.mockReturnValue(false);
         modelContractMocks.getPromptModeArgs.mockImplementation((_agentType, instruction) => [instruction]);
         mergeMocks.recoverFromRestart.mockResolvedValue(undefined);

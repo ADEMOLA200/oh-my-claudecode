@@ -1,4 +1,4 @@
-export type CliAgentType = "claude" | "codex" | "gemini" | "cursor";
+export type CliAgentType = 'claude' | 'codex' | 'gemini' | 'cursor';
 export interface CliAgentContract {
     agentType: CliAgentType;
     binary: string;
@@ -10,7 +10,7 @@ export interface CliAgentContract {
     /** CLI flag for prompt mode (e.g., '-p' for gemini) */
     promptModeFlag?: string;
 }
-export type TeamReasoningEffort = "low" | "medium" | "high" | "xhigh";
+export type TeamReasoningEffort = 'low' | 'medium' | 'high' | 'xhigh';
 export interface ParsedTeamWorkerLaunchArgs {
     passthrough: string[];
     wantsBypass: boolean;
