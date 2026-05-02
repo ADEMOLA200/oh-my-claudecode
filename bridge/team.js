@@ -4609,7 +4609,8 @@ function normalizeTeamWorkerLaunchArgs(args, preferredModel, preferredReasoning,
   const parsed = parseTeamWorkerLaunchArgs(args);
   const normalized = [...parsed.passthrough];
   if (parsed.wantsBypass) normalized.push(CODEX_BYPASS_FLAG);
-  const selectedReasoning = parsed.reasoningOverride ?? (normalizeOptionalReasoning(preferredReasoning) ? `${REASONING_KEY}="${normalizeOptionalReasoning(preferredReasoning)}"` : null);
+  const normalizedPreferredReasoning = typeof preferredReasoning === "string" && isReasoningOverride(preferredReasoning) ? preferredReasoning : normalizeOptionalReasoning(preferredReasoning) ? `${REASONING_KEY}="${normalizeOptionalReasoning(preferredReasoning)}"` : null;
+  const selectedReasoning = parsed.reasoningOverride ?? normalizedPreferredReasoning;
   const selectedModelProvider = preferredModelProviderOverride ?? parsed.modelProviderOverride;
   if (selectedModelProvider) normalized.push(CONFIG_FLAG, selectedModelProvider);
   if (selectedReasoning) normalized.push(CONFIG_FLAG, selectedReasoning);
@@ -4620,12 +4621,14 @@ function normalizeTeamWorkerLaunchArgs(args, preferredModel, preferredReasoning,
 function resolveTeamWorkerLaunchArgs(options) {
   const envArgs = splitWorkerLaunchArgs(options.existingRaw);
   const inheritedArgs = options.inheritedArgs ?? [];
-  const allArgs = [...envArgs, ...inheritedArgs];
   const envParsed = parseTeamWorkerLaunchArgs(envArgs);
   const inheritedParsed = parseTeamWorkerLaunchArgs(inheritedArgs);
   const selectedModel = normalizeOptionalModel(envParsed.modelOverride) ?? normalizeOptionalModel(inheritedParsed.modelOverride) ?? normalizeOptionalModel(options.fallbackModel);
+  const selectedReasoning = envParsed.reasoningOverride ?? inheritedParsed.reasoningOverride ?? options.preferredReasoning;
   const selectedModelProvider = envParsed.modelProviderOverride ?? inheritedParsed.modelProviderOverride ?? void 0;
-  return normalizeTeamWorkerLaunchArgs(allArgs, selectedModel, options.preferredReasoning, selectedModelProvider);
+  const passthroughArgs = [...envParsed.passthrough, ...inheritedParsed.passthrough];
+  if (envParsed.wantsBypass || inheritedParsed.wantsBypass) passthroughArgs.push(CODEX_BYPASS_FLAG);
+  return normalizeTeamWorkerLaunchArgs(passthroughArgs, selectedModel, selectedReasoning, selectedModelProvider);
 }
 function resolveAgentReasoningEffort(agentType) {
   const normalized = normalizeRoleName(agentType);
@@ -5075,7 +5078,7 @@ When you see a shutdown request in your inbox:
 - Do NOT spawn sub-agents. Complete work in this worker session only.
 - Do NOT create tmux panes/sessions (\`tmux split-window\`, \`tmux new-session\`, etc.).
 - Do NOT run team spawning/orchestration commands (for example: \`${teamCommand2} ...\`, \`omx team ...\`, \`$team\`, \`$ultrawork\`, \`$autopilot\`, \`$ralph\`).
-- Worker-allowed control surface is only: \`${teamApiCommand} ... --json\` (and equivalent \`omx team api ... --json\` where configured).
+- Worker-allowed control surface is only: \`${teamApiCommand} ... --json\`.
 - If blocked, write {"state": "blocked", "reason": "..."} to your status file
 
 ${agentTypeGuidance(agentType)}

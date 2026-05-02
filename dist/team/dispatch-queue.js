@@ -7,7 +7,7 @@
  * State file: .omc/state/team/{name}/dispatch/requests.json
  * Lock path:  .omc/state/team/{name}/dispatch/.lock/
  *
- * Mirrors OMX src/team/state/dispatch.ts behavior exactly.
+ * OMX-derived behavior adapted to OMC .omc state-root contracts.
  */
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';

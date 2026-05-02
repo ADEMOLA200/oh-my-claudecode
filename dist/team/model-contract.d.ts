@@ -65,7 +65,7 @@ export declare const _testInternals: {
 export declare function splitWorkerLaunchArgs(raw: string | undefined): string[];
 export declare function parseTeamWorkerLaunchArgs(args: string[]): ParsedTeamWorkerLaunchArgs;
 export declare function collectInheritableTeamWorkerArgs(workerArgs: string[]): string[];
-export declare function normalizeTeamWorkerLaunchArgs(args: string[], preferredModel?: string, preferredReasoning?: TeamReasoningEffort, preferredModelProviderOverride?: string): string[];
+export declare function normalizeTeamWorkerLaunchArgs(args: string[], preferredModel?: string, preferredReasoning?: TeamReasoningEffort | string | null, preferredModelProviderOverride?: string): string[];
 export declare function resolveTeamWorkerLaunchArgs(options: ResolveTeamWorkerLaunchArgsOptions): string[];
 export declare function isLowComplexityAgentType(agentType?: string): boolean;
 export declare function resolveAgentReasoningEffort(agentType?: string): TeamReasoningEffort | undefined;

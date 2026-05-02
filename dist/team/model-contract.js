@@ -235,8 +235,10 @@ export function normalizeTeamWorkerLaunchArgs(args, preferredModel, preferredRea
     const normalized = [...parsed.passthrough];
     if (parsed.wantsBypass)
         normalized.push(CODEX_BYPASS_FLAG);
-    const selectedReasoning = parsed.reasoningOverride
-        ?? (normalizeOptionalReasoning(preferredReasoning) ? `${REASONING_KEY}="${normalizeOptionalReasoning(preferredReasoning)}"` : null);
+    const normalizedPreferredReasoning = typeof preferredReasoning === 'string' && isReasoningOverride(preferredReasoning)
+        ? preferredReasoning
+        : (normalizeOptionalReasoning(preferredReasoning) ? `${REASONING_KEY}="${normalizeOptionalReasoning(preferredReasoning)}"` : null);
+    const selectedReasoning = parsed.reasoningOverride ?? normalizedPreferredReasoning;
     const selectedModelProvider = preferredModelProviderOverride ?? parsed.modelProviderOverride;
     if (selectedModelProvider)
         normalized.push(CONFIG_FLAG, selectedModelProvider);
@@ -250,14 +252,19 @@ export function normalizeTeamWorkerLaunchArgs(args, preferredModel, preferredRea
 export function resolveTeamWorkerLaunchArgs(options) {
     const envArgs = splitWorkerLaunchArgs(options.existingRaw);
     const inheritedArgs = options.inheritedArgs ?? [];
-    const allArgs = [...envArgs, ...inheritedArgs];
     const envParsed = parseTeamWorkerLaunchArgs(envArgs);
     const inheritedParsed = parseTeamWorkerLaunchArgs(inheritedArgs);
     const selectedModel = normalizeOptionalModel(envParsed.modelOverride)
         ?? normalizeOptionalModel(inheritedParsed.modelOverride)
         ?? normalizeOptionalModel(options.fallbackModel);
+    const selectedReasoning = envParsed.reasoningOverride
+        ?? inheritedParsed.reasoningOverride
+        ?? options.preferredReasoning;
     const selectedModelProvider = envParsed.modelProviderOverride ?? inheritedParsed.modelProviderOverride ?? undefined;
-    return normalizeTeamWorkerLaunchArgs(allArgs, selectedModel, options.preferredReasoning, selectedModelProvider);
+    const passthroughArgs = [...envParsed.passthrough, ...inheritedParsed.passthrough];
+    if (envParsed.wantsBypass || inheritedParsed.wantsBypass)
+        passthroughArgs.push(CODEX_BYPASS_FLAG);
+    return normalizeTeamWorkerLaunchArgs(passthroughArgs, selectedModel, selectedReasoning, selectedModelProvider);
 }
 export function isLowComplexityAgentType(agentType) {
     const normalized = normalizeRoleName(agentType);

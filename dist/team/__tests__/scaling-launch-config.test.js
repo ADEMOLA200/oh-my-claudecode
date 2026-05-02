@@ -9,6 +9,8 @@ const tmuxUtilsMocks = vi.hoisted(() => ({
 const modelContractMocks = vi.hoisted(() => ({
     buildWorkerArgv: vi.fn(),
     getWorkerEnv: vi.fn(),
+    resolveWorkerLaunchExtraFlags: vi.fn(() => []),
+    resolveAgentReasoningEffort: vi.fn(),
 }));
 const teamOpsMocks = vi.hoisted(() => ({
     teamReadConfig: vi.fn(),
@@ -44,6 +46,8 @@ vi.mock('../../cli/tmux-utils.js', () => ({
 vi.mock('../model-contract.js', () => ({
     buildWorkerArgv: modelContractMocks.buildWorkerArgv,
     getWorkerEnv: modelContractMocks.getWorkerEnv,
+    resolveWorkerLaunchExtraFlags: modelContractMocks.resolveWorkerLaunchExtraFlags,
+    resolveAgentReasoningEffort: modelContractMocks.resolveAgentReasoningEffort,
 }));
 vi.mock('../team-ops.js', () => ({
     teamReadConfig: teamOpsMocks.teamReadConfig,
@@ -96,6 +100,8 @@ describe('scaleUp launch config', () => {
             resize_hook_name: null,
             resize_hook_target: null,
         });
+        modelContractMocks.resolveWorkerLaunchExtraFlags.mockReturnValue([]);
+        modelContractMocks.resolveAgentReasoningEffort.mockReturnValue(undefined);
         modelContractMocks.getWorkerEnv.mockImplementation((teamName, workerName, agentType) => ({
             OMC_TEAM_WORKER: `${teamName}/${workerName}`,
             OMC_TEAM_NAME: teamName,
@@ -136,6 +142,7 @@ describe('scaleUp launch config', () => {
             teamName: 'demo-team',
             workerName: 'worker-1',
             cwd: resolve(cwd),
+            extraFlags: [],
         });
         expect(tmuxSessionMocks.buildWorkerStartCommand).toHaveBeenCalledWith(expect.objectContaining({
             teamName: 'demo-team',

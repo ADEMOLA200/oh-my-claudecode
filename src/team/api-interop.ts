@@ -398,19 +398,7 @@ function readTeamStateRootFromEnv(env: NodeJS.ProcessEnv = process.env): string 
   return candidate || null;
 }
 
-export function resolveTeamApiCliCommand(env: NodeJS.ProcessEnv = process.env): 'omc team api' | 'omx team api' {
-  const hasOmcContext = (
-    (typeof env.OMC_TEAM_WORKER === 'string' && env.OMC_TEAM_WORKER.trim() !== '')
-    || (typeof env.OMC_TEAM_STATE_ROOT === 'string' && env.OMC_TEAM_STATE_ROOT.trim() !== '')
-  );
-  if (hasOmcContext) return 'omc team api';
-
-  const hasOmxContext = (
-    (typeof env.OMX_TEAM_WORKER === 'string' && env.OMX_TEAM_WORKER.trim() !== '')
-    || (typeof env.OMX_TEAM_STATE_ROOT === 'string' && env.OMX_TEAM_STATE_ROOT.trim() !== '')
-  );
-  if (hasOmxContext) return 'omx team api';
-
+export function resolveTeamApiCliCommand(_env: NodeJS.ProcessEnv = process.env): 'omc team api' {
   return 'omc team api';
 }
 

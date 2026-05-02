@@ -2,7 +2,7 @@
  * MCP Communication Layer - High-level dispatch functions.
  *
  * Coordinates inbox writes, mailbox messages, and dispatch requests
- * with notification callbacks. Mirrors OMX src/team/mcp-comm.ts exactly.
+ * with notification callbacks. OMX-derived behavior is adapted to OMC contracts.
  *
  * Functions:
  * - queueInboxInstruction: write inbox + enqueue dispatch + notify

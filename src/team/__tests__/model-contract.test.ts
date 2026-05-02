@@ -387,6 +387,19 @@ describe('model-contract', () => {
       expect(explicit.join(' ').match(/model_reasoning_effort/g)?.length).toBe(1);
     });
 
+    it('keeps exactly one canonical reasoning override with env > inherited > preferred precedence', () => {
+      expect(resolveTeamWorkerLaunchArgs({
+        existingRaw: '-c model_reasoning_effort="high"',
+        inheritedArgs: ['-c', 'model_reasoning_effort="low"'],
+        preferredReasoning: 'medium',
+      })).toEqual(['-c', 'model_reasoning_effort="high"']);
+
+      expect(resolveTeamWorkerLaunchArgs({
+        inheritedArgs: ['-c', 'model_reasoning_effort="xhigh"'],
+        preferredReasoning: 'medium',
+      })).toEqual(['-c', 'model_reasoning_effort="xhigh"']);
+    });
+
     it('maps worker roles to OMC default model and reasoning lanes without model-name heuristics', () => {
       vi.stubEnv('OMC_MODEL_LOW', 'omc-low-model');
       vi.stubEnv('OMC_MODEL_MEDIUM', 'omc-medium-model');
